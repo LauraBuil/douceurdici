@@ -100,7 +100,6 @@ function Home() {
     </section>
 
     <section className="social-band">
-      <div className="newsletter"><div><span className="eyebrow">Rejoignez notre univers</span><h2>Des nouvelles de l’atelier</h2><p>Nos nouveautés, nos rituels et nos offres exclusives.</p></div><form onSubmit={(event) => event.preventDefault()}><label className="sr-only" htmlFor="newsletter-email">Votre adresse e-mail</label><input id="newsletter-email" type="email" placeholder="Votre adresse e-mail" required /><button className="button button--dark">S’inscrire</button></form><small>Pas de spam, que du beau et du vrai. ♡</small></div>
       <div className="instagram"><div className="instagram-title"><h2>Sur Instagram <em>un peu d’inspiration</em></h2><a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Voir le compte <ArrowRight /></a></div><div className="instagram-grid"><img src="/assets/bougie-bebe.jpg" alt="Bougies artisanales sur Instagram" /><img src="/assets/savon-lavande.png" alt="Savon artisanal sur Instagram" /><img src="/assets/creations-douceur-dici.jpg" alt="Coulisses de l’atelier sur Instagram" /><img src="/assets/bougie-bebe.jpg" alt="Créations Douceur d’ici sur Instagram" /></div></div>
     </section>
   </main><Footer /></>
