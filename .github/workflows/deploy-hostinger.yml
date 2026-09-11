@@ -1,0 +1,99 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hostinger-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the site
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
+      - name: Configure the Hostinger connection
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.HOSTINGER_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/douceurdici_hostinger
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/douceurdici_hostinger ~/.ssh/known_hosts
+
+      - name: Deploy the selected branch
+        shell: bash
+        env:
+          SSH_HOST: 109.106.246.157
+          SSH_PORT: "65002"
+          SSH_USER: u935036763
+        run: |
+          set -euo pipefail
+
+          case "$GITHUB_REF_NAME" in
+            main)
+              target_dir="/home/u935036763/domains/douceurdici.com/public_html"
+              preserve_dev="yes"
+              ;;
+            dev)
+              target_dir="/home/u935036763/domains/douceurdici.com/public_html/dev"
+              preserve_dev="no"
+              ;;
+            *)
+              echo "Unsupported branch: $GITHUB_REF_NAME" >&2
+              exit 1
+              ;;
+          esac
+
+          ssh_args=(
+            -i ~/.ssh/douceurdici_hostinger
+            -p "$SSH_PORT"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes
+          )
+          remote="$SSH_USER@$SSH_HOST"
+          staging_dir="/home/u935036763/.deployments/douceurdici/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          ssh "${ssh_args[@]}" "$remote" "mkdir -p '$staging_dir' '$target_dir'"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/douceurdici_hostinger -p $SSH_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
+            dist/ "$remote:$staging_dir/"
+
+          if [[ "$preserve_dev" == "yes" ]]; then
+            ssh "${ssh_args[@]}" "$remote" \
+              "rsync -a --delete --exclude='dev/' --exclude='.well-known/' '$staging_dir/' '$target_dir/'"
+          else
+            ssh "${ssh_args[@]}" "$remote" \
+              "rsync -a --delete --exclude='.well-known/' '$staging_dir/' '$target_dir/'"
+          fi
+
+          ssh "${ssh_args[@]}" "$remote" "rm -rf '$staging_dir'"
