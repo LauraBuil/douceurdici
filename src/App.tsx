@@ -58,15 +58,51 @@ function usePublicProducts() {
 
 function Home() {
   const products = usePublicProducts()
-  const featured = products.filter((product) => product.featured).slice(0, 4)
+  const featured = [...products.filter((product) => product.featured), ...products.filter((product) => !product.featured)]
+    .filter((product, index, list) => list.findIndex((item) => item.id === product.id) === index)
+    .slice(0, 4)
+
   return <><Header /><main>
-    <section className="hero"><div className="hero-copy"><span className="eyebrow"><Sparkles size={15} /> Fait main en petites séries</span><h1>Bougies & savons <em>artisanaux</em></h1><p className="script">pour des instants doux et sensoriels</p><p className="hero-text">Des créations façonnées à la main, inspirées par la nature et les paysages des Pyrénées.</p><div className="button-row"><button className="button button--dark" onClick={() => navigate('/catalogue')}>Découvrir la collection <ArrowRight size={17} /></button><a className="button button--light" href="#histoire">Notre histoire</a></div></div><div className="hero-image"><img src="/assets/creations-douceur-dici.jpg" alt="Bougies artisanales Douceur d’ici mises en scène avec des fleurs séchées" /><div className="hero-seal"><Flame size={18} /> Coulées avec patience</div></div><img className="botanical botanical--hero" src="/assets/branche-botanique.png" alt="" /></section>
-    <section className="values" aria-label="Nos engagements"><article><Leaf /><div><h2>Fabrication artisanale</h2><p>Créé et emballé avec soin à l’atelier.</p></div></article><article><Sparkles /><div><h2>Petites séries</h2><p>Des pièces singulières, jamais impersonnelles.</p></div></article><article><Recycle /><div><h2>Pots rechargeables</h2><p>Rapportez votre contenant pour le remplir à nouveau.</p></div></article></section>
-    <section className="category-grid section-shell"><article className="category-card category-card--candles"><img src="/assets/bougie-bebe.jpg" alt="Bougies bébé artisanales" /><div><span>Douces & décoratives</span><h2>Bougies artisanales</h2><button onClick={() => navigate('/catalogue?categorie=bougie')}>Découvrir <ArrowRight /></button></div></article><article className="category-card category-card--soap"><img src="/assets/savon-lavande.png" alt="Savon artisanal illustré de lavande" /><div><span>Naturels & généreux</span><h2>Savons artisanaux</h2><button onClick={() => navigate('/catalogue?categorie=savon')}>Découvrir <ArrowRight /></button></div></article></section>
-    <section id="recharge" className="recharge section-shell"><div className="recharge-copy"><span className="eyebrow">Une démarche durable</span><h2>Donnez une seconde vie <em>à vos bougies</em></h2><p>Nos pots sont faits pour durer. Rapportez-les à l’atelier et choisissez le parfum qui accompagnera leur nouvelle vie.</p><a className="button button--dark" href="mailto:bonjour@douceurdici.com?subject=Recharge%20de%20ma%20bougie">Organiser une recharge</a></div><div className="steps"><div><span>1</span><Flame /><strong>Profitez</strong><small>de votre bougie</small></div><ArrowRight /><div><span>2</span><ShoppingBag /><strong>Rapportez</strong><small>votre pot</small></div><ArrowRight /><div><span>3</span><Recycle /><strong>Rechargez</strong><small>avec votre parfum</small></div></div></section>
-    <section className="featured section-shell"><div className="section-heading"><span className="eyebrow">Les favoris de la maison</span><h2>Nos créations phares</h2><button onClick={() => navigate('/catalogue')}>Voir tout le catalogue <ArrowRight /></button></div><div className="product-grid">{featured.map((product) => <ProductCard key={product.id} product={product} />)}</div></section>
-    <section id="histoire" className="story section-shell"><div className="story-image"><img src="/assets/creations-douceur-dici.jpg" alt="Créations artisanales colorées Douceur d’ici" /></div><div className="story-copy"><span className="eyebrow">Notre histoire</span><h2>Un atelier, <em>une passion</em></h2><p>Douceur d’ici est née au cœur des Pyrénées, de l’envie de créer des objets qui réchauffent la maison et racontent le geste artisanal. Chaque pièce est coulée, démoulée et préparée à la main.</p><a href="mailto:bonjour@douceurdici.com">Échanger avec l’artisane <ArrowRight /></a></div><blockquote>« La beauté se cache dans les petits gestes, les parfums familiers et les objets faits pour durer. »</blockquote></section>
-    <section className="newsletter"><div><span className="eyebrow">Rejoignez notre univers</span><h2>Un peu de douceur dans votre boîte mail</h2><p>Nouveautés, marchés et coulisses de l’atelier. Quelques nouvelles, jamais trop.</p></div><form onSubmit={(event) => event.preventDefault()}><label className="sr-only" htmlFor="newsletter-email">Votre adresse e-mail</label><input id="newsletter-email" type="email" placeholder="Votre adresse e-mail" required /><button className="button button--dark">S’inscrire</button></form></section>
+    <section className="hero">
+      <div className="hero-copy">
+        <span className="eyebrow">Bougies & savons artisanaux</span>
+        <h1>Bougies & savons <em>artisanaux</em></h1>
+        <p className="script">pour des rituels simples<br />et sensoriels</p>
+        <p className="hero-text">Des créations faites à la main avec des ingrédients choisis, dans le respect de la nature et de vos instants du quotidien.</p>
+        <div className="button-row"><button className="button button--dark" onClick={() => navigate('/catalogue')}>Découvrir la collection</button><a className="button button--light" href="#histoire">Notre histoire</a></div>
+      </div>
+      <div className="hero-image"><img src="/assets/creations-douceur-dici.jpg" alt="Créations artisanales Douceur d’ici entourées de fleurs séchées" /></div>
+      <img className="botanical botanical--hero" src="/assets/branche-botanique.png" alt="" />
+    </section>
+
+    <section className="values" aria-label="Nos engagements">
+      <article><Leaf /><div><h2>Fabrication artisanale</h2><p>Fait main en petits lots dans notre atelier.</p></div></article>
+      <article><Sparkles /><div><h2>Ingrédients choisis</h2><p>Des matières sélectionnées avec attention.</p></div></article>
+      <article><Recycle /><div><h2>Pots rechargeables</h2><p>Pensés pour être réutilisés, encore et encore.</p></div></article>
+    </section>
+
+    <section className="category-grid section-shell">
+      <article className="category-card category-card--candles"><img src="/assets/bougie-bebe.jpg" alt="Bougies artisanales Douceur d’ici" /><div><h2>Bougies<br />artisanales</h2><p>Cires végétales & créations délicates.</p><button onClick={() => navigate('/catalogue?categorie=bougie')}>Découvrir <ArrowRight /></button></div></article>
+      <article className="category-card category-card--soap"><img src="/assets/savon-lavande.png" alt="Savon artisanal à la lavande" /><div><h2>Savons<br />artisanaux</h2><p>Doux, généreux et fabriqués avec soin.</p><button onClick={() => navigate('/catalogue?categorie=savon')}>Découvrir <ArrowRight /></button></div></article>
+    </section>
+
+    <section id="recharge" className="recharge section-shell">
+      <div className="recharge-copy"><h2>Donnez une seconde vie <em>à vos bougies</em></h2><p>Nos pots sont faits pour durer. Rapportez-les à l’atelier et faites-les remplir avec le parfum de votre choix.</p><a className="button button--dark" href="mailto:bonjour@douceurdici.com?subject=Recharge%20de%20ma%20bougie">En savoir plus</a></div>
+      <div className="steps"><div><span>1.</span><Flame /><strong>Utilisez</strong><small>Profitez pleinement<br />de votre bougie.</small></div><ArrowRight /><div><span>2.</span><ShoppingBag /><strong>Rapportez</strong><small>Ramenez votre pot<br />à l’atelier.</small></div><ArrowRight /><div><span>3.</span><Recycle /><strong>Remplissez</strong><small>Nous le nettoyons<br />et le remplissons.</small></div></div>
+    </section>
+
+    <section className="featured section-shell"><div className="section-heading"><h2>Nos créations phares</h2><button onClick={() => navigate('/catalogue')}>Voir tout le catalogue <ArrowRight /></button></div><div className="product-grid">{featured.map((product) => <ProductCard key={product.id} product={product} />)}</div></section>
+
+    <section id="histoire" className="story section-shell">
+      <div className="story-image"><img src="/assets/creations-douceur-dici.jpg" alt="Créations artisanales préparées à l’atelier Douceur d’ici" /></div>
+      <div className="story-copy"><span className="eyebrow">Notre histoire</span><h2>Un atelier, <em>une passion</em></h2><p>Douceur d’ici est née au cœur des Pyrénées, de l’envie de créer des objets beaux, simples et responsables. Chaque pièce est imaginée et préparée à la main.</p><a href="mailto:bonjour@douceurdici.com">Découvrir notre histoire <ArrowRight /></a></div>
+      <blockquote><span>“</span>La durabilité n’est pas une contrainte, c’est une promesse de douceur qui dure dans le temps.<small>♡</small></blockquote>
+    </section>
+
+    <section className="social-band">
+      <div className="newsletter"><div><span className="eyebrow">Rejoignez notre univers</span><h2>Des nouvelles de l’atelier</h2><p>Nos nouveautés, nos rituels et nos offres exclusives.</p></div><form onSubmit={(event) => event.preventDefault()}><label className="sr-only" htmlFor="newsletter-email">Votre adresse e-mail</label><input id="newsletter-email" type="email" placeholder="Votre adresse e-mail" required /><button className="button button--dark">S’inscrire</button></form><small>Pas de spam, que du beau et du vrai. ♡</small></div>
+      <div className="instagram"><div className="instagram-title"><h2>Sur Instagram <em>un peu d’inspiration</em></h2><a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Voir le compte <ArrowRight /></a></div><div className="instagram-grid"><img src="/assets/bougie-bebe.jpg" alt="Bougies artisanales sur Instagram" /><img src="/assets/savon-lavande.png" alt="Savon artisanal sur Instagram" /><img src="/assets/creations-douceur-dici.jpg" alt="Coulisses de l’atelier sur Instagram" /><img src="/assets/bougie-bebe.jpg" alt="Créations Douceur d’ici sur Instagram" /></div></div>
+    </section>
   </main><Footer /></>
 }
 
