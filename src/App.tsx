@@ -71,7 +71,7 @@ function Home() {
         <p className="hero-text">Des créations faites à la main avec des ingrédients choisis, dans le respect de la nature et de vos instants du quotidien.</p>
         <div className="button-row"><button className="button button--dark" onClick={() => navigate('/catalogue')}>Découvrir la collection</button><a className="button button--light" href="#histoire">Notre histoire</a></div>
       </div>
-      <div className="hero-image"><img src="/assets/creations-douceur-dici.jpg" alt="Créations artisanales Douceur d’ici entourées de fleurs séchées" /></div>
+      <div className="hero-image"><img src="/assets/DSC0270655.JPG" alt="Bougies sculptées Douceur d’ici dans un décor naturel" /></div>
       <img className="botanical botanical--hero" src="/assets/branche-botanique.png" alt="" />
     </section>
 
@@ -82,7 +82,7 @@ function Home() {
     </section>
 
     <section className="category-grid section-shell">
-      <article className="category-card category-card--candles"><img src="/assets/bougie-bebe.jpg" alt="Bougies artisanales Douceur d’ici" /><div><h2>Bougies<br />artisanales</h2><p>Cires végétales & créations délicates.</p><button onClick={() => navigate('/catalogue?categorie=bougie')}>Découvrir <ArrowRight /></button></div></article>
+      <article className="category-card category-card--candles"><img src="/assets/DSC026881.JPG" alt="Bougies artisanales fleuries Douceur d’ici" /><div><h2>Bougies<br />artisanales</h2><p>Cires végétales & créations délicates.</p><button onClick={() => navigate('/catalogue?categorie=bougie')}>Découvrir <ArrowRight /></button></div></article>
       <article className="category-card category-card--soap"><img src="/assets/savon-lavande.png" alt="Savon artisanal à la lavande" /><div><h2>Savons<br />artisanaux</h2><p>Doux, généreux et fabriqués avec soin.</p><button onClick={() => navigate('/catalogue?categorie=savon')}>Découvrir <ArrowRight /></button></div></article>
     </section>
 
@@ -94,13 +94,13 @@ function Home() {
     <section className="featured section-shell"><div className="section-heading"><h2>Nos créations phares</h2><button onClick={() => navigate('/catalogue')}>Voir tout le catalogue <ArrowRight /></button></div><div className="product-grid">{featured.map((product) => <ProductCard key={product.id} product={product} />)}</div></section>
 
     <section id="histoire" className="story section-shell">
-      <div className="story-image"><img src="/assets/creations-douceur-dici.jpg" alt="Créations artisanales préparées à l’atelier Douceur d’ici" /></div>
+      <div className="story-image"><img src="/assets/DSC02699.JPG" alt="Bougie ourson façonnée à la main par Douceur d’ici" /></div>
       <div className="story-copy"><span className="eyebrow">Notre histoire</span><h2>Un atelier, <em>une passion</em></h2><p>Douceur d’ici est née au cœur des Pyrénées, de l’envie de créer des objets beaux, simples et responsables. Chaque pièce est imaginée et préparée à la main.</p><a href="mailto:bonjour@douceurdici.com">Découvrir notre histoire <ArrowRight /></a></div>
       <blockquote><span>“</span>La durabilité n’est pas une contrainte, c’est une promesse de douceur qui dure dans le temps.<small>♡</small></blockquote>
     </section>
 
     <section className="social-band">
-      <div className="instagram"><div className="instagram-title"><h2>Sur Instagram <em>un peu d’inspiration</em></h2><a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Voir le compte <ArrowRight /></a></div><div className="instagram-grid"><img src="/assets/bougie-bebe.jpg" alt="Bougies artisanales sur Instagram" /><img src="/assets/savon-lavande.png" alt="Savon artisanal sur Instagram" /><img src="/assets/creations-douceur-dici.jpg" alt="Coulisses de l’atelier sur Instagram" /><img src="/assets/bougie-bebe.jpg" alt="Créations Douceur d’ici sur Instagram" /></div></div>
+      <div className="instagram"><div className="instagram-title"><h2>Sur Instagram <em>un peu d’inspiration</em></h2><a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Voir le compte <ArrowRight /></a></div><div className="instagram-grid"><img src="/assets/DSC026835.JPG" alt="Bougie ourson jaune Douceur d’ici" /><img src="/assets/DSC026881.JPG" alt="Bougies fleuries dans leur panier" /><img src="/assets/DSC027065.JPG" alt="Bougies sculptées aux tons naturels" /><img src="/assets/DSC0270655.JPG" alt="Collection de bougies dans un décor naturel" /></div></div>
     </section>
   </main><Footer /></>
 }
