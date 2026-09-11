@@ -28,7 +28,7 @@ img { display:block; max-width:100%; }
 .shop-button { justify-self:end; border:0; border-radius:999px; padding:.78rem 1.1rem; display:flex; align-items:center; gap:.5rem; background:var(--olive-dark); color:white; text-transform:uppercase; letter-spacing:.08em; font-size:.68rem; cursor:pointer; }
 .menu-button { display:none; justify-self:end; border:0; background:none; cursor:pointer; }
 .section-shell { width:min(1240px,calc(100% - 4rem)); margin-inline:auto; }
-.hero { position:relative; min-height:620px; display:grid; grid-template-columns:51% 49%; overflow:hidden; background:#f7f0e6; }
+.hero { position:relative; min-height:570px; display:grid; grid-template-columns:48% 52%; overflow:hidden; background:#f7f0e6; }
 .hero-copy { position:relative; z-index:2; max-width:690px; padding:4.4rem 3rem 6rem max(4rem,calc((100vw - 1240px)/2)); display:flex; flex-direction:column; justify-content:center; }
 .eyebrow { display:inline-flex; align-items:center; gap:.5rem; color:var(--olive); text-transform:uppercase; letter-spacing:.15em; font-size:.72rem; font-weight:600; }
 .hero h1,.catalogue-hero h1 { margin:.6rem 0 0; max-width:620px; font-family:Didot,'Abhaya Libre',serif; font-size:clamp(3.8rem,5.2vw,5.5rem); line-height:.88; font-weight:500; letter-spacing:-.035em; }
@@ -40,9 +40,9 @@ img { display:block; max-width:100%; }
 .button:hover { transform:translateY(-2px); }
 .button--dark { background:var(--olive-dark); color:white; }
 .button--light { background:transparent; color:var(--olive-dark); }
-.hero-image { position:relative; min-height:620px; overflow:hidden; background:#eadfce; }
+.hero-image { position:relative; min-height:570px; overflow:hidden; background:#eadfce; }
 .hero-image:after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,#f7f0e6 0%,rgba(247,240,230,.56) 14%,transparent 38%),linear-gradient(0deg,rgba(62,45,28,.1),transparent 42%); }
-.hero-image>img { width:100%; height:100%; object-fit:cover; object-position:54% center; filter:grayscale(.28) sepia(.3) saturate(.58) brightness(1.12) contrast(.86); }
+.hero-image>img { width:100%; height:100%; object-fit:cover; object-position:center center; filter:grayscale(.12) sepia(.16) saturate(.72) brightness(1.08) contrast(.9); }
 .hero-seal { display:none; }
 .botanical--hero { position:absolute; z-index:3; left:42%; bottom:-118px; width:270px; opacity:.5; transform:rotate(-31deg); pointer-events:none; mix-blend-mode:multiply; }
 .values { position:relative; z-index:4; width:min(1190px,calc(100% - 4rem)); margin:-28px auto 0; padding:1.55rem 2.7rem; display:grid; grid-template-columns:repeat(3,1fr); gap:2rem; background:#fbf7ef; box-shadow:none; border:0; }
@@ -64,7 +64,7 @@ img { display:block; max-width:100%; }
 .category-card p { max-width:180px; margin:0 0 .9rem; color:#5d584f; font-size:.78rem; line-height:1.55; }
 .category-card button,.section-heading button,.story-copy a { border:0; border-bottom:1px solid var(--ink); padding:.4rem 0; display:inline-flex; gap:.8rem; align-items:center; background:none; text-transform:uppercase; letter-spacing:.1em; font-size:.7rem; cursor:pointer; }
 .category-card button svg,.section-heading button svg,.story-copy a svg { width:17px; }
-.category-card--candles img { object-position:center 62%; filter:saturate(.62) sepia(.14) brightness(1.04); }
+.category-card--candles img { width:64%; object-position:left 48%; filter:saturate(.72) sepia(.1) brightness(1.04); }
 .category-card--soap { background:#f3ede2; }
 .category-card--soap img { width:67%; object-fit:contain; object-position:left center; filter:saturate(.74) sepia(.08); }
 .recharge { position:relative; margin-top:1.1rem; padding:2.6rem 3.6rem; display:grid; grid-template-columns:.85fr 1.35fr; align-items:center; gap:3.3rem; background:#f3eee5; overflow:hidden; }
@@ -97,7 +97,7 @@ img { display:block; max-width:100%; }
 .product-info>strong { font-family:'Red Hat Text',sans-serif; font-size:.78rem; white-space:nowrap; }
 .story { display:grid; grid-template-columns:1.05fr 1.02fr .98fr; min-height:305px; margin-bottom:2.5rem; background:#f3ede2; }
 .story-image { overflow:hidden; }
-.story-image img { width:100%; height:100%; object-fit:cover; object-position:center 58%; filter:saturate(.65) sepia(.12); }
+.story-image img { width:100%; height:100%; object-fit:cover; object-position:center 54%; filter:saturate(.72) sepia(.08); }
 .story-copy,.story blockquote { padding:2.3rem 2.5rem; display:flex; flex-direction:column; justify-content:center; }
 .story-copy p { color:var(--muted); line-height:1.65; font-size:.75rem; }
 .story-copy a { width:max-content; margin-top:.6rem; }
@@ -112,7 +112,7 @@ img { display:block; max-width:100%; }
 .instagram-title a { margin-bottom:.85rem; display:flex; align-items:center; gap:.45rem; border-bottom:1px solid var(--ink); text-transform:uppercase; letter-spacing:.08em; font-size:.6rem; }
 .instagram-title a svg { width:15px; }
 .instagram-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.45rem; }
-.instagram-grid img { width:100%; aspect-ratio:1.45/1; object-fit:cover; filter:saturate(.65) sepia(.1); }
+.instagram-grid img { width:100%; aspect-ratio:1.45/1; object-fit:cover; object-position:center 48%; filter:saturate(.72) sepia(.08); }
 .footer { padding:2.7rem max(2rem,calc((100vw - 1240px)/2)) 1.2rem; background:#f4ece0; }
 .footer-grid { display:grid; grid-template-columns:1.7fr repeat(3,1fr); gap:3rem; }
 .footer-grid h3 { margin:.8rem 0 1rem; text-transform:uppercase; letter-spacing:.12em; font-size:.7rem; }
@@ -213,7 +213,7 @@ img { display:block; max-width:100%; }
   .nav a,.nav button { padding:.85rem; text-align:left; }
   .hero { grid-template-columns:1fr; }
   .hero-copy { padding:5rem 3rem; }
-  .hero-image { min-height:520px; }
+  .hero-image { min-height:clamp(390px,58vw,560px); }
   .botanical--hero { left:auto; right:-80px; bottom:400px; }
   .recharge { grid-template-columns:1fr; }
   .story { grid-template-columns:1fr 1fr; }
@@ -233,7 +233,7 @@ img { display:block; max-width:100%; }
   .hero { min-height:auto; }
   .hero-copy { padding:4rem 1.35rem 3rem; }
   .hero h1 { font-size:clamp(3.6rem,17vw,5.6rem); }
-  .hero-image { min-height:390px; }
+  .hero-image { min-height:300px; }
   .values { margin:0; width:100%; padding:1.5rem; grid-template-columns:1fr; gap:1.2rem; box-shadow:none; }
   .values article+article { border-left:0; border-top:1px solid var(--line); padding:1.2rem 0 0; }
   .category-grid { padding-top:3.5rem; grid-template-columns:1fr; }
