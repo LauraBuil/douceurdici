@@ -138,6 +138,26 @@ img { display:block; max-width:100%; }
 .footer-grid a,.footer-grid button { border:0; padding:0; display:flex; gap:.5rem; background:none; color:var(--muted); font-size:.78rem; cursor:pointer; }
 .footer-bottom { margin-top:3rem; padding-top:1rem; border-top:1px solid var(--line); display:flex; justify-content:space-between; color:#858074; font-size:.65rem; }
 .footer-bottom button { border:0; background:none; color:inherit; cursor:pointer; }
+.footer-legal-links { display:flex; align-items:center; gap:1.25rem; }
+
+.legal-page { background:var(--paper); min-height:70vh; padding:clamp(7rem,12vw,10rem) clamp(1.25rem,6vw,6rem) clamp(4rem,8vw,7rem); }
+.legal-heading { width:min(1120px,100%); margin:0 auto 3rem; padding-bottom:2rem; border-bottom:1px solid var(--line); }
+.legal-heading h1 { margin:.35rem 0 .8rem; font-family:var(--serif); font-size:clamp(3rem,7vw,5.5rem); font-weight:400; line-height:.95; }
+.legal-heading>p { max-width:650px; color:var(--muted); font-size:1.05rem; line-height:1.7; }
+.legal-layout { width:min(1120px,100%); margin:auto; display:grid; grid-template-columns:220px minmax(0,720px); gap:clamp(2rem,7vw,7rem); align-items:start; }
+.legal-layout aside { position:sticky; top:7rem; padding:1.4rem; border:1px solid var(--line); background:rgba(255,255,255,.45); }
+.legal-layout aside p { margin:0 0 .3rem; color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; }
+.legal-layout aside strong { display:block; font-family:var(--serif); font-size:1.15rem; font-weight:400; }
+.legal-layout aside a { display:inline-block; margin-top:1.4rem; color:var(--olive); font-size:.82rem; text-transform:uppercase; letter-spacing:.06em; }
+.legal-content { display:grid; gap:2.5rem; }
+.legal-content section { padding-bottom:2.5rem; border-bottom:1px solid var(--line); }
+.legal-content section:last-child { border-bottom:0; padding-bottom:0; }
+.legal-content h2 { margin:0 0 1rem; font-family:var(--serif); font-size:clamp(1.6rem,3vw,2.1rem); font-weight:400; }
+.legal-content p { margin:.65rem 0 0; color:#4e4a42; font-size:1rem; line-height:1.8; }
+.legal-content a { color:var(--olive); text-decoration:underline; text-underline-offset:3px; }
+.legal-todo { margin:1.2rem 0; padding:1.1rem 1.25rem; border-left:3px solid #9a7950; background:#f3eadc; }
+.legal-todo strong { color:#6f4f2f; font-size:.85rem; text-transform:uppercase; letter-spacing:.06em; }
+.legal-todo p { margin:.35rem 0 0; color:#5d5143; }
 
 .catalogue-page { min-height:70vh; background:var(--paper); }
 .catalogue-hero { padding:5.5rem 2rem 4.5rem; text-align:center; background:linear-gradient(rgba(250,246,239,.82),rgba(246,238,226,.92)),url('/assets/creations-douceur-dici.jpg') center 54%/cover; }
@@ -348,6 +368,9 @@ button.danger { color:#964a3f; }
   .footer-grid { grid-template-columns:1fr 1fr; }
   .footer-grid>.brand { grid-column:1/-1; }
   .footer-bottom { flex-direction:column; gap:.5rem; }
+  .footer-legal-links { flex-wrap:wrap; gap:.5rem 1rem; }
+  .legal-layout { grid-template-columns:1fr; }
+  .legal-layout aside { position:static; }
   .catalogue-hero { padding:4rem 1.2rem; }
   .admin-login { grid-template-columns:1fr; }
   .login-visual { min-height:40vh; padding:2rem; }
