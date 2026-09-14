@@ -20,6 +20,9 @@ Deno.serve(async (request) => {
     const parsed = new URL(requestOrigin)
     if (allowedHosts.has(parsed.hostname)) origin = parsed.origin
   } catch { /* Keep the safe default origin. */ }
+  const redirectOrigin = ["https://douceurdici.com", "https://www.douceurdici.com", "https://dev.douceurdici.com"].includes(origin)
+    ? origin
+    : "https://dev.douceurdici.com"
 
   if (request.method === "OPTIONS") return response({ ok: true }, 200, origin)
   if (request.method !== "POST") return response({ error: "Méthode non autorisée." }, 405, origin)
@@ -45,7 +48,7 @@ Deno.serve(async (request) => {
   if (!/^\S+@\S+\.\S+$/.test(email) || !["admin", "exploitant"].includes(role ?? "")) return response({ error: "Adresse e-mail ou rôle invalide." }, 400, origin)
 
   const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } })
-  const { data: invitation, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo: `${origin}/admin`, data: { invited_by: user.id } })
+  const { data: invitation, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo: `${redirectOrigin}/admin`, data: { invited_by: user.id } })
   if (inviteError || !invitation.user) return response({ error: inviteError?.message.includes("already") ? "Un compte existe déjà avec cette adresse." : "L’invitation n’a pas pu être envoyée." }, 400, origin)
 
   const { error: profileError } = await admin.from("admins").insert({ user_id: invitation.user.id, email, role, active: true })
