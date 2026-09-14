@@ -36,14 +36,53 @@ function Header() {
   return <><div className="announcement">Créations artisanales des Pyrénées · Retrait local sur rendez-vous</div><header className="site-header"><div className="header-inner">
     <Logo compact />
     <nav className={open ? 'nav nav--open' : 'nav'} aria-label="Navigation principale">
-      <button onClick={() => go('/catalogue?categorie=bougie')}>Bougies</button><button onClick={() => go('/catalogue?categorie=savon')}>Savons</button><button onClick={() => go('/galerie')}>Galerie</button><button onClick={() => go('/marches')}>Marchés</button><a href="/#histoire" onClick={() => setOpen(false)}>Notre histoire</a>
+      <button onClick={() => go('/catalogue?categorie=bougie')}>Bougies</button>
+      <button onClick={() => go('/catalogue?categorie=savon')}>Savons</button>
+      <button onClick={() => go('/catalogue?categorie=coffrets')}>Coffrets</button>
+      <button onClick={() => go('/catalogue?categorie=fondants')}>Fondants</button>
+      <button onClick={() => go('/catalogue?categorie=diffuseurs')}>Diffuseurs</button>
+      <button onClick={() => go('/galerie')}>Galerie</button>
+      <button onClick={() => go('/marches')}>Marchés</button>
+      {/*<a href="/#histoire" onClick={() => setOpen(false)}>Notre histoire</a>*/}
     </nav>
-    <button className="shop-button" onClick={() => go('/catalogue')}><ShoppingBag size={17} /> La boutique</button><button className="menu-button" onClick={() => setOpen(!open)} aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}>{open ? <X /> : <Menu />}</button>
+    <button className="shop-button" onClick={() => go('/catalogue')}>
+      <ShoppingBag size={17} /> La boutique</button>
+    <button className="menu-button" onClick={() => setOpen(!open)} aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}>{open ? <X /> : <Menu />}</button>
   </div></header></>
 }
 
 function Footer() {
-  return <footer id="contact" className="footer"><div className="footer-grid"><Logo /><div><h3>Boutique</h3><button onClick={() => navigate('/catalogue?categorie=bougie')}>Bougies</button><button onClick={() => navigate('/catalogue?categorie=savon')}>Savons</button><button onClick={() => navigate('/catalogue?categorie=coffret')}>Coffrets</button></div><div><h3>La maison</h3><a href="/#histoire">Notre histoire</a><a href="/#recharge">Notre engagement</a><a href="mailto:bonjour@douceurdici.com">Nous écrire</a></div><div><h3>Nous retrouver</h3><a href="https://www.instagram.com/" target="_blank" rel="noreferrer"><AtSign size={17} /> Instagram</a><a href="mailto:bonjour@douceurdici.com">bonjour@douceurdici.com</a></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Douceur d’ici</span><span>Fabriqué avec soin dans les Pyrénées</span><div className="footer-legal-links"><button onClick={() => navigate('/mentions-legales')}>Mentions légales</button><button onClick={() => navigate('/admin')}>Administration</button></div></div></footer>
+  return (
+  <footer id="contact" className="footer">
+    <div className="footer-grid"><Logo /><div>
+      <h3>Boutique</h3>
+      <button onClick={() => navigate('/catalogue?categorie=bougie')}>Bougies</button>
+      <button onClick={() => navigate('/catalogue?categorie=savon')}>Savons</button>
+      <button onClick={() => navigate('/catalogue?categorie=coffrets')}>Coffrets</button>
+      <button onClick={() => navigate('/catalogue?categorie=fondants')}>Fondants</button>
+      <button onClick={() => navigate('/catalogue?categorie=diffuseurs')}>Diffuseurs</button>
+    </div>
+      <div>
+        <h3>La maison</h3>
+        <a href="/#recharge">Mes engagements</a>
+        <a href="mailto:douceurdici@protonmail.com">M'écrire</a>
+    </div>
+      <div>
+        <h3>Nous retrouver</h3>
+        <a href="https://www.instagram.com/" target="_blank" rel="noreferrer"><AtSign size={17} /> Instagram</a>
+        <a href="mailto:douceurdici@protonmail.com">douceurdici@protonmail.com</a>
+      </div>
+    </div>
+    <div className="footer-bottom">
+      <span>© {new Date().getFullYear()} Douceur d’ici, conçu et développé par Laura Buil</span>
+      <span>Fabriqué avec soin dans les Pyrénées</span>
+      <div className="footer-legal-links">
+        <button onClick={() => navigate('/mentions-legales')}>Mentions légales</button>
+        <button onClick={() => navigate('/admin')}>Administration</button>
+      </div>
+    </div>
+  </footer>
+  )
 }
 
 function ProductCard({ product }: { product: Product }) {
@@ -81,14 +120,16 @@ function Home() {
         <h1>Bougies & savons <em>artisanaux</em></h1>
         <p className="script">pour des rituels simples<br />et sensoriels</p>
         <p className="hero-text">Des créations faites à la main avec des ingrédients choisis, dans le respect de la nature et de vos instants du quotidien.</p>
-        <div className="button-row"><button className="button button--dark" onClick={() => navigate('/catalogue')}>Découvrir la collection</button><a className="button button--light" href="#histoire">Notre histoire</a></div>
+        <div className="button-row"><button className="button button--dark" onClick={() => navigate('/catalogue')}>Découvrir la collection</button>
+          {/*<a className="button button--light" href="#histoire">Notre histoire</a>*/}
+        </div>
       </div>
       <div className="hero-image"><img src="/assets/DSC0270655.JPG" alt="Bougies sculptées Douceur d’ici dans un décor naturel" /></div>
       <img className="botanical botanical--hero" src="/assets/branche-botanique.png" alt="" />
     </section>
 
-    <section className="values" aria-label="Nos engagements">
-      <article><Leaf /><div><h2>Fabrication artisanale</h2><p>Fait main en petits lots dans notre atelier.</p></div></article>
+    <section className="values" aria-label="Mes engagements">
+      <article><Leaf /><div><h2>Fabrication artisanale</h2><p>Fait main en petits lots dans mon atelier.</p></div></article>
       <article><Sparkles /><div><h2>Ingrédients choisis</h2><p>Des matières sélectionnées avec attention.</p></div></article>
       <article><Recycle /><div><h2>Pots rechargeables</h2><p>Pensés pour être réutilisés, encore et encore.</p></div></article>
     </section>
@@ -99,15 +140,19 @@ function Home() {
     </section>
 
     <section id="recharge" className="recharge section-shell">
-      <div className="recharge-copy"><h2>Donnez une seconde vie <em>à vos bougies</em></h2><p>Nos pots sont faits pour durer. Rapportez-les à l’atelier et faites-les remplir avec le parfum de votre choix.</p><a className="button button--dark" href="mailto:bonjour@douceurdici.com?subject=Recharge%20de%20ma%20bougie">En savoir plus</a></div>
+      <div className="recharge-copy"><h2>Donnez une seconde vie <em>à vos bougies</em></h2><p>Mes pots sont faits pour durer. Rapportez-les à l’atelier et faites-les remplir avec le parfum de votre choix.</p><a className="button button--dark" href="mailto:douceurdici@protonmail.com?subject=Recharge%20de%20ma%20bougie">En savoir plus</a></div>
       <div className="steps"><div><span>1.</span><Flame /><strong>Utilisez</strong><small>Profitez pleinement<br />de votre bougie.</small></div><ArrowRight /><div><span>2.</span><ShoppingBag /><strong>Rapportez</strong><small>Ramenez votre pot<br />à l’atelier.</small></div><ArrowRight /><div><span>3.</span><Recycle /><strong>Remplissez</strong><small>Nous le nettoyons<br />et le remplissons.</small></div></div>
     </section>
 
-    <section className="featured section-shell"><div className="section-heading"><h2>Nos créations phares</h2><button onClick={() => navigate('/catalogue')}>Voir tout le catalogue <ArrowRight /></button></div><div className="product-grid">{featured.map((product) => <ProductCard key={product.id} product={product} />)}</div></section>
+    <section className="featured section-shell"><div className="section-heading"><h2>Mes créations phares</h2><button onClick={() => navigate('/catalogue')}>Voir tout le catalogue <ArrowRight /></button></div><div className="product-grid">{featured.map((product) => <ProductCard key={product.id} product={product} />)}</div></section>
 
     <section id="histoire" className="story section-shell">
       <div className="story-image"><img src="/assets/DSC02699.JPG" alt="Bougie ourson façonnée à la main par Douceur d’ici" /></div>
-      <div className="story-copy"><span className="eyebrow">Notre histoire</span><h2>Un atelier, <em>une passion</em></h2><p>Douceur d’ici est née au cœur des Pyrénées, de l’envie de créer des objets beaux, simples et responsables. Chaque pièce est imaginée et préparée à la main.</p><a href="mailto:bonjour@douceurdici.com">Découvrir notre histoire <ArrowRight /></a></div>
+      <div className="story-copy">
+        {/*<span className="eyebrow">Notre histoire</span>*/}
+        <h2>Un atelier, <em>une passion</em></h2><p>Douceur d’ici est née au cœur des Pyrénées, de l’envie de créer des objets beaux, simples et responsables. Chaque pièce est imaginée et préparée à la main.</p>
+        {/*<a href="mailto:douceurdici@protonmail.com">Découvrir notre histoire <ArrowRight /></a>*/}
+      </div>
       <blockquote><span>“</span>La durabilité n’est pas une contrainte, c’est une promesse de douceur qui dure dans le temps.<small>♡</small></blockquote>
     </section>
 
@@ -123,7 +168,7 @@ function Catalogue() {
   const [filter, setFilter] = useState(initial)
   const categories = [...new Map(products.map((product) => [product.category_record?.slug ?? product.category, productCategoryLabel(product)])).entries()]
   const filtered = filter === 'tous' ? products : products.filter((product) => product.category === filter || product.category_record?.slug === filter)
-  return <><Header /><main className="catalogue-page"><section className="catalogue-hero"><span className="eyebrow">La boutique</span><h1>Nos créations artisanales</h1><p>Des bougies, savons et coffrets préparés en petites séries dans les Pyrénées.</p></section><section className="catalogue-content section-shell"><div className="filters" role="group" aria-label="Filtrer le catalogue"><button className={filter === 'tous' ? 'active' : ''} onClick={() => setFilter('tous')}>Tout</button>{categories.map(([slug, label]) => <button key={slug} className={filter === slug ? 'active' : ''} onClick={() => setFilter(slug)}>{label}</button>)}</div>{filtered.length ? <div className="product-grid product-grid--catalogue">{filtered.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><Leaf /><h2>Cette collection arrive bientôt.</h2><p>De nouvelles créations sont en préparation à l’atelier.</p></div>}</section></main><Footer /></>
+  return <><Header /><main className="catalogue-page"><section className="catalogue-hero"><span className="eyebrow">La boutique</span><h1>Mes créations artisanales</h1><p>Des bougies, savons, coffrets, fondants et diffuseurs préparés en petites séries dans les Pyrénées.</p></section><section className="catalogue-content section-shell"><div className="filters" role="group" aria-label="Filtrer le catalogue"><button className={filter === 'tous' ? 'active' : ''} onClick={() => setFilter('tous')}>Tout</button>{categories.map(([slug, label]) => <button key={slug} className={filter === slug ? 'active' : ''} onClick={() => setFilter(slug)}>{label}</button>)}</div>{filtered.length ? <div className="product-grid product-grid--catalogue">{filtered.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><Leaf /><h2>Cette collection arrive bientôt.</h2><p>De nouvelles créations sont en préparation à l’atelier.</p></div>}</section></main><Footer /></>
 }
 
 function ProductDetailPage({ slug }: { slug: string }) {
@@ -163,21 +208,21 @@ function MarketsPage() {
     supabase.from('markets').select('*').eq('published', true).gte('start_date', new Date().toISOString()).order('start_date').then(({ data }) => { setMarkets((data ?? []) as Market[]); setLoading(false) })
   }, [])
   const dateLabel = (date: string) => new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(date))
-  return <><Header /><main className="content-page"><header className="content-hero"><span className="eyebrow">Retrouvez-nous</span><h1>Calendrier des marchés</h1><p>Les prochaines dates où découvrir nos créations et nous rencontrer.</p></header><section className="market-list section-shell">{loading ? <div className="page-loading"><LoaderCircle className="spin" /> Chargement du calendrier…</div> : markets.length ? markets.map((market) => <article key={market.id}><CalendarDays /><div><time dateTime={market.start_date}>{dateLabel(market.start_date)}</time><h2>{market.name}</h2><strong>{market.location}</strong>{market.details && <p>{market.details}</p>}</div></article>) : <div className="empty-state"><CalendarDays /><h2>Les prochaines dates arrivent.</h2><p>Le calendrier des marchés sera mis à jour prochainement.</p></div>}</section></main><Footer /></>
+  return <><Header /><main className="content-page"><header className="content-hero"><span className="eyebrow">Retrouvez-nous</span><h1>Calendrier des marchés</h1><p>Les prochaines dates où découvrir mes créations et nous rencontrer.</p></header><section className="market-list section-shell">{loading ? <div className="page-loading"><LoaderCircle className="spin" /> Chargement du calendrier…</div> : markets.length ? markets.map((market) => <article key={market.id}><CalendarDays /><div><time dateTime={market.start_date}>{dateLabel(market.start_date)}</time><h2>{market.name}</h2><strong>{market.location}</strong>{market.details && <p>{market.details}</p>}</div></article>) : <div className="empty-state"><CalendarDays /><h2>Les prochaines dates arrivent.</h2><p>Le calendrier des marchés sera mis à jour prochainement.</p></div>}</section></main><Footer /></>
 }
 
 function LegalNoticePage() {
   return <><Header /><main className="legal-page">
     <header className="legal-heading"><span className="eyebrow">Informations légales</span><h1>Mentions légales</h1><p>Informations relatives à l’édition et au fonctionnement du site douceurdici.com.</p></header>
     <div className="legal-layout">
-      <aside><p>Dernière mise à jour</p><strong>14 septembre 2026</strong><a href="mailto:bonjour@douceurdici.com">Nous contacter</a></aside>
+      <aside><p>Dernière mise à jour</p><strong>14 septembre 2026</strong><a href="mailto:douceurdici@protonmail.com">Nous contacter</a></aside>
       <div className="legal-content">
-        <section><h2>1. Éditeur du site</h2><p>Le site <strong>douceurdici.com</strong> est édité par Douceur d’ici, artisan de bougies et savons dans les Pyrénées.</p><div className="legal-todo"><strong>À compléter avant la mise en production</strong><p>Nom et prénom ou raison sociale, forme juridique, adresse de domiciliation, numéro SIREN ou SIRET, immatriculation au RNE/RCS, capital social et numéro de TVA intracommunautaire lorsqu’ils sont applicables.</p></div><p>Adresse électronique : <a href="mailto:bonjour@douceurdici.com">bonjour@douceurdici.com</a></p></section>
-        <section><h2>2. Direction de la publication</h2><p>La direction de la publication est assurée par la personne responsable de Douceur d’ici.</p><div className="legal-todo"><strong>À compléter avant la mise en production</strong><p>Nom et prénom de la directrice ou du directeur de la publication.</p></div></section>
+        <section><h2>1. Éditeur du site</h2><p>Le site <strong>douceurdici.com</strong> est édité par Laura Buil, conceptrice et développeuse d'applications web.</p><div className="legal-todo"><p>N° Siret 827 536 749 00027, Raison sociale Douceur d'ici, Entrepreneur individuel (EI).</p></div><p>Adresse électronique : <a href="mailto:douceurdici@protonmail.com">douceurdici@protonmail.com</a></p></section>
+        <section><h2>2. Direction de la publication</h2><p>La direction de la publication est assurée par la personne responsable de Douceur d’ici.</p><div className="legal-todo"><p>Clara Tetart, directrice et propriétaire.</p></div></section>
         <section><h2>3. Hébergement</h2><p>Le site est hébergé par <strong>Hostinger International Limited</strong>, société privée à responsabilité limitée de droit chypriote, 61 Lordou Vironos Street, 6023 Larnaca, Chypre.</p><p><a href="https://www.hostinger.fr/" target="_blank" rel="noreferrer">www.hostinger.fr</a></p></section>
         <section><h2>4. Propriété intellectuelle</h2><p>Les textes, photographies, illustrations, éléments graphiques, logos et créations présentés sur ce site sont protégés par le droit de la propriété intellectuelle. Sauf autorisation écrite préalable, toute reproduction, représentation, adaptation ou exploitation, totale ou partielle, est interdite.</p></section>
         <section><h2>5. Responsabilité</h2><p>Douceur d’ici veille à fournir des informations aussi exactes et à jour que possible. Ces informations sont données à titre indicatif et peuvent évoluer. Douceur d’ici ne peut garantir l’absence d’erreur ou l’accès continu au site.</p></section>
-        <section><h2>6. Données personnelles</h2><p>Les messages envoyés à l’adresse de contact sont utilisés uniquement pour répondre à la demande reçue. Des données techniques peuvent être traitées par l’hébergeur pour assurer la sécurité et le bon fonctionnement du site.</p><p>Pour toute question ou pour exercer vos droits d’accès, de rectification, d’effacement, de limitation ou d’opposition, écrivez à <a href="mailto:bonjour@douceurdici.com">bonjour@douceurdici.com</a>.</p></section>
+        <section><h2>6. Données personnelles</h2><p>Les messages envoyés à l’adresse de contact sont utilisés uniquement pour répondre à la demande reçue. Des données techniques peuvent être traitées par l’hébergeur pour assurer la sécurité et le bon fonctionnement du site.</p><p>Pour toute question ou pour exercer vos droits d’accès, de rectification, d’effacement, de limitation ou d’opposition, écrivez à <a href="mailto:douceurdici@protonmail.com">douceurdici@protonmail.com</a>.</p></section>
         <section><h2>7. Cookies et stockage local</h2><p>Le site public ne dépose pas de cookies publicitaires ou de mesure d’audience. L’espace d’administration utilise uniquement les mécanismes techniques nécessaires à l’authentification et à la sécurité de la session.</p></section>
         <section><h2>8. Liens externes</h2><p>Le site peut contenir des liens vers des services tiers. Douceur d’ici n’exerce aucun contrôle sur leur contenu ni sur leurs pratiques de confidentialité.</p></section>
       </div>
@@ -440,7 +485,11 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null,
     <fieldset className="catalog-choice"><legend>Parfums proposés</legend><p>La composition affichée vient automatiquement du parfum sélectionné.</p><div className="fragrance-choice-grid">{fragrances.filter((item) => item.active || selectedFragrances.includes(item.id)).map((fragrance) => <label key={fragrance.id} className={selectedFragrances.includes(fragrance.id) ? 'selected' : ''}><input type="checkbox" checked={selectedFragrances.includes(fragrance.id)} onChange={() => toggleChoice(fragrance.id, selectedFragrances, setSelectedFragrances)} /><span><strong>{fragrance.name}</strong><small>{fragrance.composition}</small></span></label>)}</div>{!fragrances.length && <small>Ajoutez d’abord des parfums dans Paramètres.</small>}</fieldset>
     <label>Description courte<input value={form.short_description} onChange={(event) => update('short_description', event.target.value)} placeholder="Une phrase visible dans le catalogue" required /></label><label>Description détaillée<textarea value={form.description} onChange={(event) => update('description', event.target.value)} rows={4} required /></label><div className="form-grid"><label>Poids / format<input value={form.weight ?? ''} onChange={(event) => update('weight', event.target.value)} placeholder="180 g" /></label><label>Ordre d’affichage<input type="number" value={form.sort_order} onChange={(event) => update('sort_order', Number(event.target.value))} /></label></div>
     <fieldset className="product-images-editor"><legend>Galerie du produit</legend><p>Ajoutez plusieurs photos et associez chacune à une couleur si vous le souhaitez.</p><label className="multi-upload"><Upload />Ajouter des photos<input type="file" multiple accept="image/png,image/jpeg,image/webp" onChange={(event) => { const additions = Array.from(event.target.files ?? []).map((file) => ({ localId: crypto.randomUUID(), file, color_id: '' })); setPendingImages((current) => [...current, ...additions]); event.currentTarget.value = '' }} /></label><div className="product-image-list">{images.map((image) => <article key={image.id}><img src={image.image_url} alt={image.alt_text} /><div><select value={image.color_id ?? ''} onChange={(event) => setImages((current) => current.map((item) => item.id === image.id ? { ...item, color_id: event.target.value || null } : item))}><option value="">Toutes les couleurs</option>{colors.map((color) => <option key={color.id} value={color.id}>{color.name}</option>)}</select><label><input type="radio" name="primary-image" checked={primaryImageKey === `existing:${image.id}` || (!primaryImageKey && image === images[0])} onChange={() => setPrimaryImageKey(`existing:${image.id}`)} /> Photo principale</label></div><button type="button" onClick={() => removeExistingImage(image)} aria-label="Retirer cette photo"><Trash2 /></button></article>)}{pendingImages.map((pending) => <article key={pending.localId}><div className="pending-image-name"><ImageIcon />{pending.file.name}</div><div><select value={pending.color_id} onChange={(event) => setPendingImages((current) => current.map((item) => item.localId === pending.localId ? { ...item, color_id: event.target.value } : item))}><option value="">Toutes les couleurs</option>{colors.map((color) => <option key={color.id} value={color.id}>{color.name}</option>)}</select><label><input type="radio" name="primary-image" checked={primaryImageKey === `pending:${pending.localId}` || (!primaryImageKey && !images.length && pending === pendingImages[0])} onChange={() => setPrimaryImageKey(`pending:${pending.localId}`)} /> Photo principale</label></div><button type="button" onClick={() => { setPendingImages((current) => current.filter((item) => item.localId !== pending.localId)); if (primaryImageKey === `pending:${pending.localId}`) setPrimaryImageKey('') }} aria-label="Retirer cette photo"><Trash2 /></button></article>)}</div></fieldset>
-    <div className="switches"><label><input type="checkbox" checked={form.price_visible} onChange={(event) => update('price_visible', event.target.checked)} /><span />Afficher le prix sur le site</label><label><input type="checkbox" checked={form.published} onChange={(event) => update('published', event.target.checked)} /><span />Visible dans la boutique</label><label><input type="checkbox" checked={form.featured} onChange={(event) => update('featured', event.target.checked)} /><span />Afficher parmi les créations phares</label></div>{error && <div className="form-error">{error}</div>}<footer><button type="button" className="button button--light" onClick={onClose}>Annuler</button><button className="button button--dark" disabled={saving}>{saving ? <><LoaderCircle className="spin" /> Enregistrement…</> : 'Enregistrer'}</button></footer>
+    <div className="switches"><label><input type="checkbox" checked={form.price_visible} onChange={(event) => update('price_visible', event.target.checked)} /><span />Afficher le prix sur le site</label><label><input type="checkbox" checked={form.published} onChange={(event) => update('published', event.target.checked)} /><span />Visible dans la boutique</label><label><input type="checkbox" checked={form.featured} onChange={(event) => update('featured', event.target.checked)} /><span />Afficher parmi les créations phares</label></div>{error && <div className="form-error">{error}</div>}
+    <footer>
+      <button type="button" className="button button--light" onClick={onClose}>Annuler</button>
+      <button className="button button--dark" disabled={saving}>{saving ? <><LoaderCircle className="spin" /> Enregistrement…</> : 'Enregistrer'}</button>
+    </footer>
   </form></motion.section></motion.div>
 }
 
