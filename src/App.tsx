@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowRight, AtSign, Check, ChevronDown, Flame, Heart, Leaf, LoaderCircle, LogOut, Menu, PackagePlus, Pencil, Recycle, ShoppingBag, Sparkles, Trash2, X } from 'lucide-react'
+import { ArrowRight, AtSign, CalendarDays, Check, ChevronDown, Flame, Heart, Image as ImageIcon, LayoutDashboard, Leaf, LoaderCircle, LogOut, Menu, PackagePlus, Pencil, Plus, Recycle, ShoppingBag, Sparkles, Trash2, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { categoryLabels, demoProducts, formatPrice, type Category, type Product } from './data'
+import { categoryLabels, demoProducts, formatPrice, type Category, type GalleryImage, type Market, type Product, type ProductVariant } from './data'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import { AdminGallery, AdminMarkets, AdminOverview, type AdminView } from './AdminExtras'
 
-const emptyProduct: Omit<Product, 'id'> = { name: '', slug: '', category: 'bougie', short_description: '', description: '', price: 0, weight: '', image_url: '', featured: false, published: true, sort_order: 0 }
+const emptyProduct: Omit<Product, 'id'> = { name: '', slug: '', category: 'bougie', short_description: '', description: '', price: 0, price_visible: true, color: '', scent: '', composition: '', weight: '', image_url: '', featured: false, published: true, sort_order: 0 }
 
 function navigate(path: string) {
   window.history.pushState({}, '', path)
@@ -33,7 +34,7 @@ function Header() {
   return <><div className="announcement">Créations artisanales des Pyrénées · Retrait local sur rendez-vous</div><header className="site-header"><div className="header-inner">
     <Logo compact />
     <nav className={open ? 'nav nav--open' : 'nav'} aria-label="Navigation principale">
-      <button onClick={() => go('/catalogue?categorie=bougie')}>Bougies</button><button onClick={() => go('/catalogue?categorie=savon')}>Savons</button><a href="/#histoire" onClick={() => setOpen(false)}>Notre histoire</a><a href="/#recharge" onClick={() => setOpen(false)}>La recharge</a><a href="/#contact" onClick={() => setOpen(false)}>Contact</a>
+      <button onClick={() => go('/catalogue?categorie=bougie')}>Bougies</button><button onClick={() => go('/catalogue?categorie=savon')}>Savons</button><button onClick={() => go('/galerie')}>Galerie</button><button onClick={() => go('/marches')}>Marchés</button><a href="/#histoire" onClick={() => setOpen(false)}>Notre histoire</a>
     </nav>
     <button className="shop-button" onClick={() => go('/catalogue')}><ShoppingBag size={17} /> La boutique</button><button className="menu-button" onClick={() => setOpen(!open)} aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}>{open ? <X /> : <Menu />}</button>
   </div></header></>
@@ -44,14 +45,24 @@ function Footer() {
 }
 
 function ProductCard({ product }: { product: Product }) {
-  return <article className="product-card"><div className="product-image-wrap"><img src={product.image_url || '/assets/creations-douceur-dici.jpg'} alt={product.name} /><span>{categoryLabels[product.category]}</span><button aria-label={`Ajouter ${product.name} aux favoris`}><Heart size={18} /></button></div><div className="product-info"><div><h3>{product.name}</h3><p>{product.short_description}{product.weight ? ` · ${product.weight}` : ''}</p></div><strong>{formatPrice(Number(product.price))}</strong></div></article>
+  const variants = product.product_variants ?? []
+  const colors = [...new Set(variants.map((variant) => variant.color).filter(Boolean))]
+  const scents = [...new Set(variants.map((variant) => variant.scent).filter(Boolean))]
+  const details = [scents.length && `Parfums : ${scents.join(', ')}`, colors.length && `Couleurs : ${colors.join(', ')}`, product.weight].filter(Boolean).join(' · ')
+  return <article className="product-card"><div className="product-image-wrap"><img src={product.image_url || '/assets/creations-douceur-dici.jpg'} alt={product.name} /><span>{categoryLabels[product.category]}</span><button aria-label={`Ajouter ${product.name} aux favoris`}><Heart size={18} /></button></div><div className="product-info"><div><h3>{product.name}</h3><p>{details || product.short_description}</p>{variants.length === 1 && variants[0].composition && <small>{variants[0].composition}</small>}</div>{product.price_visible !== false && <strong>{formatPrice(Number(product.price))}</strong>}</div></article>
+}
+
+function variantSummary(product: Product) {
+  const variants = product.product_variants ?? []
+  if (variants.length) return variants.map((variant) => `${variant.scent} · ${variant.color}`).join(' | ')
+  return [product.scent, product.color].filter(Boolean).join(' · ') || '—'
 }
 
 function usePublicProducts() {
   const [products, setProducts] = useState<Product[]>(demoProducts)
   useEffect(() => {
     if (!supabase) return
-    supabase.from('products').select('*').eq('published', true).order('sort_order').then(({ data, error }) => { if (!error && data?.length) setProducts(data as Product[]) })
+    supabase.from('products').select('*, product_variants(*)').eq('published', true).order('sort_order').then(({ data, error }) => { if (!error && data?.length) setProducts(data as Product[]) })
   }, [])
   return products
 }
@@ -113,6 +124,27 @@ function Catalogue() {
   return <><Header /><main className="catalogue-page"><section className="catalogue-hero"><span className="eyebrow">La boutique</span><h1>Nos créations artisanales</h1><p>Des bougies, savons et coffrets préparés en petites séries dans les Pyrénées.</p></section><section className="catalogue-content section-shell"><div className="filters" role="group" aria-label="Filtrer le catalogue"><button className={filter === 'tous' ? 'active' : ''} onClick={() => setFilter('tous')}>Tout</button>{(Object.keys(categoryLabels) as Category[]).map((key) => <button key={key} className={filter === key ? 'active' : ''} onClick={() => setFilter(key)}>{categoryLabels[key]}</button>)}</div>{filtered.length ? <div className="product-grid product-grid--catalogue">{filtered.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><Leaf /><h2>Cette collection arrive bientôt.</h2><p>De nouvelles créations sont en préparation à l’atelier.</p></div>}</section></main><Footer /></>
 }
 
+function GalleryPage() {
+  const [images, setImages] = useState<GalleryImage[]>([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    if (!supabase) { setLoading(false); return }
+    supabase.from('gallery_images').select('*').eq('published', true).order('sort_order').then(({ data }) => { setImages((data ?? []) as GalleryImage[]); setLoading(false) })
+  }, [])
+  return <><Header /><main className="content-page"><header className="content-hero"><span className="eyebrow">L’univers Douceur d’ici</span><h1>Galerie</h1><p>Créations, matières et instants de l’atelier au fil des saisons.</p></header><section className="public-gallery section-shell">{loading ? <div className="page-loading"><LoaderCircle className="spin" /> Chargement des photos…</div> : images.length ? images.map((item) => <figure key={item.id}><img src={item.image_url} alt={item.alt_text || item.caption || 'Création Douceur d’ici'} loading="lazy" /><figcaption>{item.caption}</figcaption></figure>) : <div className="empty-state"><ImageIcon /><h2>La galerie se prépare.</h2><p>Les premières photos seront bientôt ajoutées.</p></div>}</section></main><Footer /></>
+}
+
+function MarketsPage() {
+  const [markets, setMarkets] = useState<Market[]>([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    if (!supabase) { setLoading(false); return }
+    supabase.from('markets').select('*').eq('published', true).gte('start_date', new Date().toISOString()).order('start_date').then(({ data }) => { setMarkets((data ?? []) as Market[]); setLoading(false) })
+  }, [])
+  const dateLabel = (date: string) => new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(date))
+  return <><Header /><main className="content-page"><header className="content-hero"><span className="eyebrow">Retrouvez-nous</span><h1>Calendrier des marchés</h1><p>Les prochaines dates où découvrir nos créations et nous rencontrer.</p></header><section className="market-list section-shell">{loading ? <div className="page-loading"><LoaderCircle className="spin" /> Chargement du calendrier…</div> : markets.length ? markets.map((market) => <article key={market.id}><CalendarDays /><div><time dateTime={market.start_date}>{dateLabel(market.start_date)}</time><h2>{market.name}</h2><strong>{market.location}</strong>{market.details && <p>{market.details}</p>}</div></article>) : <div className="empty-state"><CalendarDays /><h2>Les prochaines dates arrivent.</h2><p>Le calendrier des marchés sera mis à jour prochainement.</p></div>}</section></main><Footer /></>
+}
+
 function Admin() {
   const [sessionUser, setSessionUser] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -161,12 +193,13 @@ function AdminLogin({ onMessage, message }: { onMessage: (message: string) => vo
 }
 
 function AdminDashboard({ email }: { email: string }) {
+  const [view, setView] = useState<AdminView>('overview')
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Product | null | 'new'>(null)
   const [notice, setNotice] = useState('')
   const loadProducts = async () => {
-    const { data } = await supabase!.from('products').select('*').order('sort_order')
+    const { data } = await supabase!.from('products').select('*, product_variants(*)').order('sort_order')
     setProducts((data ?? []) as Product[]); setLoading(false)
   }
   useEffect(() => { loadProducts() }, [])
@@ -182,7 +215,7 @@ function AdminDashboard({ email }: { email: string }) {
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: true, untrustedContentHint: true },
       async execute() {
-        const { data, error } = await supabase!.from('products').select('id,name,category,price,published,featured').order('sort_order')
+        const { data, error } = await supabase!.from('products').select('id,name,category,price,price_visible,published,featured,product_variants(color,scent,composition)').order('sort_order')
         if (error) throw new Error('Le catalogue est indisponible.')
         return { products: data }
       },
@@ -198,19 +231,28 @@ function AdminDashboard({ email }: { email: string }) {
           category: { type: 'string', enum: ['bougie', 'savon', 'diffuseur', 'coffret'] },
           short_description: { type: 'string' }, description: { type: 'string' },
           price: { type: 'number', minimum: 0 }, weight: { type: 'string' },
-          image_url: { type: 'string' }, published: { type: 'boolean' }, featured: { type: 'boolean' },
+          price_visible: { type: 'boolean' }, image_url: { type: 'string' }, published: { type: 'boolean' }, featured: { type: 'boolean' },
+          variants: { type: 'array', minItems: 1, items: { type: 'object', properties: { color: { type: 'string', minLength: 1 }, scent: { type: 'string', minLength: 1 }, composition: { type: 'string', minLength: 1 } }, required: ['color', 'scent', 'composition'], additionalProperties: false } },
         },
-        required: ['name', 'category', 'short_description', 'description', 'price'],
+        required: ['name', 'category', 'short_description', 'description', 'price', 'variants'],
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false, untrustedContentHint: true },
       async execute(input) {
         if (!input || typeof input !== 'object') throw new Error('Les informations de la création sont invalides.')
         const value = input as Record<string, unknown>
-        if (typeof value.name !== 'string' || value.name.trim().length < 2 || !['bougie', 'savon', 'diffuseur', 'coffret'].includes(String(value.category)) || typeof value.price !== 'number' || value.price < 0 || typeof value.short_description !== 'string' || typeof value.description !== 'string') throw new Error('Les champs obligatoires sont invalides.')
+        const variants = Array.isArray(value.variants) ? value.variants as Record<string, unknown>[] : []
+        const variantsAreValid = variants.length > 0 && variants.every((variant) => typeof variant.color === 'string' && variant.color.trim() && typeof variant.scent === 'string' && variant.scent.trim() && typeof variant.composition === 'string' && variant.composition.trim())
+        if (typeof value.name !== 'string' || value.name.trim().length < 2 || !['bougie', 'savon', 'diffuseur', 'coffret'].includes(String(value.category)) || typeof value.price !== 'number' || value.price < 0 || typeof value.short_description !== 'string' || typeof value.description !== 'string' || !variantsAreValid) throw new Error('Les champs obligatoires sont invalides.')
         const slug = value.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-        const { data, error } = await supabase!.from('products').insert({ name: value.name.trim(), slug, category: value.category, short_description: value.short_description, description: value.description, price: value.price, weight: typeof value.weight === 'string' ? value.weight : null, image_url: typeof value.image_url === 'string' ? value.image_url : '', published: value.published !== false, featured: value.featured === true }).select('id,name,slug').single()
+        const firstVariant = variants[0]
+        const { data, error } = await supabase!.from('products').insert({ name: value.name.trim(), slug, category: value.category, short_description: value.short_description, description: value.description, price: value.price, price_visible: value.price_visible !== false, color: String(firstVariant.color).trim(), scent: String(firstVariant.scent).trim(), composition: String(firstVariant.composition).trim(), weight: typeof value.weight === 'string' ? value.weight : null, image_url: typeof value.image_url === 'string' ? value.image_url : '', published: value.published !== false, featured: value.featured === true }).select('id,name,slug').single()
         if (error) throw new Error('La création n’a pas pu être ajoutée.')
+        const { error: variantsError } = await supabase!.from('product_variants').insert(variants.map((variant, index) => ({ product_id: data.id, color: String(variant.color).trim(), scent: String(variant.scent).trim(), composition: String(variant.composition).trim(), sort_order: index })))
+        if (variantsError) {
+          await supabase!.from('products').delete().eq('id', data.id)
+          throw new Error('Les variantes de la création n’ont pas pu être ajoutées.')
+        }
         await loadProducts()
         setNotice('Catalogue mis à jour.')
         return { product: data, status: 'created' }
@@ -223,11 +265,24 @@ function AdminDashboard({ email }: { email: string }) {
     const { error } = await supabase!.from('products').delete().eq('id', product.id)
     if (error) setNotice('La création n’a pas pu être supprimée.'); else { setNotice('Création supprimée.'); loadProducts() }
   }
-  return <div className="admin-shell"><aside className="admin-sidebar"><Logo compact /><nav><button className="active"><ShoppingBag /> Catalogue</button><button onClick={() => navigate('/')}><ArrowRight /> Voir le site</button></nav><div className="admin-account"><small>Connecté avec</small><span>{email}</span><button onClick={() => supabase!.auth.signOut()}><LogOut /> Se déconnecter</button></div></aside><main className="admin-main"><header><div><span className="eyebrow">Administration</span><h1>Le catalogue</h1><p>{products.length} création{products.length > 1 ? 's' : ''} enregistrée{products.length > 1 ? 's' : ''}</p></div><button className="button button--dark" onClick={() => setEditing('new')}><PackagePlus /> Ajouter une création</button></header>{notice && <div className="admin-notice"><Check />{notice}<button onClick={() => setNotice('')}><X /></button></div>}{loading ? <div className="admin-loading-inline"><LoaderCircle className="spin" /> Chargement du catalogue…</div> : <div className="admin-table-wrap"><table><thead><tr><th>Création</th><th>Collection</th><th>Prix</th><th>Visibilité</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{products.map((product) => <tr key={product.id}><td><div className="table-product"><img src={product.image_url || '/assets/creations-douceur-dici.jpg'} alt="" /><div><strong>{product.name}</strong><small>{product.short_description}</small></div></div></td><td>{categoryLabels[product.category]}</td><td>{formatPrice(Number(product.price))}</td><td><span className={product.published ? 'status status--published' : 'status'}>{product.published ? 'En ligne' : 'Brouillon'}</span></td><td><div className="row-actions"><button onClick={() => setEditing(product)} aria-label={`Modifier ${product.name}`}><Pencil /></button><button onClick={() => remove(product)} aria-label={`Supprimer ${product.name}`}><Trash2 /></button></div></td></tr>)}</tbody></table>{!products.length && <div className="empty-state"><PackagePlus /><h2>Votre catalogue est prêt.</h2><p>Ajoutez votre première création pour la voir apparaître dans la boutique.</p></div>}</div>}</main><AnimatePresence>{editing && <ProductEditor product={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); setNotice('Catalogue mis à jour.'); loadProducts() }} />}</AnimatePresence></div>
+  const labels: Record<AdminView, { title: string; description: string }> = {
+    overview: { title: 'Tableau de bord', description: 'Gérez le contenu visible sur votre site.' },
+    products: { title: 'Produits', description: `${products.length} création${products.length > 1 ? 's' : ''} enregistrée${products.length > 1 ? 's' : ''}` },
+    gallery: { title: 'Galerie photos', description: 'Ajoutez et organisez les images présentées sur le site.' },
+    markets: { title: 'Calendrier des marchés', description: 'Planifiez les prochaines dates où vous rencontrer.' },
+  }
+  const navItems: { id: AdminView; label: string; icon: typeof LayoutDashboard }[] = [
+    { id: 'overview', label: 'Tableau de bord', icon: LayoutDashboard },
+    { id: 'products', label: 'Produits', icon: ShoppingBag },
+    { id: 'gallery', label: 'Galerie photos', icon: ImageIcon },
+    { id: 'markets', label: 'Calendrier des marchés', icon: CalendarDays },
+  ]
+  return <div className="admin-shell"><aside className="admin-sidebar"><Logo compact /><nav>{navItems.map(({ id, label, icon: Icon }) => <button key={id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><Icon /> {label}</button>)}<button onClick={() => navigate('/')}><ArrowRight /> Voir le site</button></nav><div className="admin-account"><small>Connecté avec</small><span>{email}</span><button onClick={() => supabase!.auth.signOut()}><LogOut /> Se déconnecter</button></div></aside><main className="admin-main"><header><div><span className="eyebrow">Administration</span><h1>{labels[view].title}</h1><p>{labels[view].description}</p></div>{view === 'products' && <button className="button button--dark" onClick={() => setEditing('new')}><PackagePlus /> Ajouter un produit</button>}</header>{notice && view === 'products' && <div className="admin-notice"><Check />{notice}<button onClick={() => setNotice('')}><X /></button></div>}<div className="admin-view">{view === 'overview' && <AdminOverview productCount={products.length} onOpen={setView} />}{view === 'products' && (loading ? <div className="admin-loading-inline"><LoaderCircle className="spin" /> Chargement du catalogue…</div> : <div className="admin-table-wrap"><table><thead><tr><th>Produit</th><th>Parfum & couleur</th><th>Prix</th><th>Visibilité</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{products.map((product) => <tr key={product.id}><td><div className="table-product"><img src={product.image_url || '/assets/creations-douceur-dici.jpg'} alt="" /><div><strong>{product.name}</strong><small>{categoryLabels[product.category]} · {product.composition || product.short_description}</small></div></div></td><td>{variantSummary(product)}</td><td>{product.price_visible ? formatPrice(Number(product.price)) : <span className="status">Prix masqué</span>}</td><td><span className={product.published ? 'status status--published' : 'status'}>{product.published ? 'En ligne' : 'Brouillon'}</span></td><td><div className="row-actions"><button onClick={() => setEditing(product)} aria-label={`Modifier ${product.name}`}><Pencil /></button><button onClick={() => remove(product)} aria-label={`Supprimer ${product.name}`}><Trash2 /></button></div></td></tr>)}</tbody></table>{!products.length && <div className="empty-state"><PackagePlus /><h2>Votre catalogue est prêt.</h2><p>Ajoutez votre premier produit.</p></div>}</div>)}{view === 'gallery' && <AdminGallery />}{view === 'markets' && <AdminMarkets />}</div></main><AnimatePresence>{editing && <ProductEditor product={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); setNotice('Catalogue mis à jour.'); loadProducts() }} />}</AnimatePresence></div>
 }
 
 function ProductEditor({ product, onClose, onSaved }: { product: Product | null, onClose: () => void, onSaved: () => void }) {
-  const [form, setForm] = useState<Omit<Product, 'id'>>(product ? { ...product } : emptyProduct)
+  const [form, setForm] = useState<Omit<Product, 'id'>>(product ? { ...emptyProduct, ...product } : emptyProduct)
+  const [variants, setVariants] = useState<ProductVariant[]>(product?.product_variants?.length ? product.product_variants : [{ color: product?.color ?? '', scent: product?.scent ?? '', composition: product?.composition ?? '', sort_order: 0 }])
   const [file, setFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -235,6 +290,13 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null,
   const update = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => setForm((current) => ({ ...current, [key]: value }))
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setSaving(true); setError('')
+    if (variants.some((variant) => !variant.color.trim() || !variant.scent.trim() || !variant.composition.trim())) {
+      setError('Chaque variante doit avoir une couleur, un parfum et une composition.'); setSaving(false); return
+    }
+    const combinations = variants.map((variant) => `${variant.color.trim().toLowerCase()}|${variant.scent.trim().toLowerCase()}`)
+    if (new Set(combinations).size !== combinations.length) {
+      setError('Deux variantes utilisent la même couleur et le même parfum.'); setSaving(false); return
+    }
     let imageUrl = form.image_url
     if (file) {
       const { data: { user } } = await supabase!.auth.getUser()
@@ -244,17 +306,41 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null,
       if (upload.error) { setError('L’image n’a pas pu être envoyée.'); setSaving(false); return }
       imageUrl = supabase!.storage.from('product-images').getPublicUrl(path).data.publicUrl
     }
-    const payload = { ...form, slug: form.slug || slugify(form.name), image_url: imageUrl, price: Number(form.price), weight: form.weight || null }
-    const query = product ? supabase!.from('products').update(payload).eq('id', product.id) : supabase!.from('products').insert(payload)
-    const { error: saveError } = await query
-    if (saveError) setError(saveError.code === '23505' ? 'Une création utilise déjà ce nom ou cette adresse.' : 'La création n’a pas pu être enregistrée.'); else onSaved()
+    const { product_variants: _ignored, ...productFields } = form
+    const firstVariant = variants[0]
+    const payload = { ...productFields, slug: form.slug || slugify(form.name), image_url: imageUrl, price: Number(form.price), weight: form.weight || null, color: firstVariant.color, scent: firstVariant.scent, composition: firstVariant.composition }
+    const query = product ? supabase!.from('products').update(payload).eq('id', product.id).select('id').single() : supabase!.from('products').insert(payload).select('id').single()
+    const { data: savedProduct, error: saveError } = await query
+    if (saveError || !savedProduct) { setError(saveError?.code === '23505' ? 'Un produit utilise déjà ce nom.' : 'Le produit n’a pas pu être enregistré.'); setSaving(false); return }
+    if (product) {
+      const { error: deleteError } = await supabase!.from('product_variants').delete().eq('product_id', product.id)
+      if (deleteError) { setError('Les anciennes variantes n’ont pas pu être remplacées.'); setSaving(false); return }
+    }
+    const { error: variantsError } = await supabase!.from('product_variants').insert(variants.map((variant, index) => ({ product_id: savedProduct.id, color: variant.color.trim(), scent: variant.scent.trim(), composition: variant.composition.trim(), sort_order: index })))
+    if (variantsError) setError('Le produit est enregistré, mais ses variantes n’ont pas pu être ajoutées.')
+    else onSaved()
     setSaving(false)
   }
-  return <motion.div className="editor-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><motion.section className="editor-panel" initial={{ x: 60 }} animate={{ x: 0 }} exit={{ x: 60 }} aria-modal="true" role="dialog" aria-labelledby="editor-title"><header><div><span className="eyebrow">Catalogue</span><h2 id="editor-title">{product ? 'Modifier la création' : 'Nouvelle création'}</h2></div><button onClick={onClose} aria-label="Fermer"><X /></button></header><form onSubmit={submit}><label>Nom de la création<input value={form.name} onChange={(event) => { update('name', event.target.value); if (!product) update('slug', slugify(event.target.value)) }} required /></label><div className="form-grid"><label>Collection<select value={form.category} onChange={(event) => update('category', event.target.value as Category)}>{(Object.keys(categoryLabels) as Category[]).map((key) => <option key={key} value={key}>{categoryLabels[key]}</option>)}</select><ChevronDown /></label><label>Prix en €<input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update('price', Number(event.target.value))} required /></label></div><label>Description courte<input value={form.short_description} onChange={(event) => update('short_description', event.target.value)} placeholder="Cire végétale · Parfum floral" required /></label><label>Description<textarea value={form.description} onChange={(event) => update('description', event.target.value)} rows={4} required /></label><div className="form-grid"><label>Poids / format<input value={form.weight ?? ''} onChange={(event) => update('weight', event.target.value)} placeholder="180 g" /></label><label>Ordre d’affichage<input type="number" value={form.sort_order} onChange={(event) => update('sort_order', Number(event.target.value))} /></label></div><label>Photo<input className="file-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />{form.image_url && <small>Une image est déjà associée à cette création.</small>}</label><div className="switches"><label><input type="checkbox" checked={form.published} onChange={(event) => update('published', event.target.checked)} /><span />Visible dans la boutique</label><label><input type="checkbox" checked={form.featured} onChange={(event) => update('featured', event.target.checked)} /><span />Afficher parmi les créations phares</label></div>{error && <div className="form-error">{error}</div>}<footer><button type="button" className="button button--light" onClick={onClose}>Annuler</button><button className="button button--dark" disabled={saving}>{saving ? <><LoaderCircle className="spin" /> Enregistrement…</> : 'Enregistrer'}</button></footer></form></motion.section></motion.div>
+  return <motion.div className="editor-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+    <motion.section className="editor-panel" initial={{ x: 60 }} animate={{ x: 0 }} exit={{ x: 60 }} aria-modal="true" role="dialog" aria-labelledby="editor-title">
+      <header><div><span className="eyebrow">Catalogue</span><h2 id="editor-title">{product ? 'Modifier le produit' : 'Nouveau produit'}</h2></div><button onClick={onClose} aria-label="Fermer"><X /></button></header>
+      <form onSubmit={submit}>
+        <label>Nom du produit<input value={form.name} onChange={(event) => { update('name', event.target.value); if (!product) update('slug', slugify(event.target.value)) }} required /></label>
+        <div className="form-grid"><label>Collection<select value={form.category} onChange={(event) => update('category', event.target.value as Category)}>{(Object.keys(categoryLabels) as Category[]).map((key) => <option key={key} value={key}>{categoryLabels[key]}</option>)}</select><ChevronDown /></label><label>Prix en €<input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update('price', Number(event.target.value))} required /></label></div>
+        <fieldset className="variant-editor"><legend>Couleurs, parfums et compositions</legend><p>Ajoutez une ligne pour chaque combinaison proposée.</p>{variants.map((variant, index) => <div className="variant-row" key={variant.id ?? index}><label>Couleur<input value={variant.color} onChange={(event) => setVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, color: event.target.value } : item))} placeholder="Ivoire" required /></label><label>Parfum<input value={variant.scent} onChange={(event) => setVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, scent: event.target.value } : item))} placeholder="Fleur de coton" required /></label><label>Composition<textarea value={variant.composition} onChange={(event) => setVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, composition: event.target.value } : item))} rows={2} placeholder="Cire végétale, mèche coton…" required /></label><button type="button" disabled={variants.length === 1} onClick={() => setVariants((current) => current.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Supprimer la variante ${index + 1}`}><Trash2 /></button></div>)}<button type="button" className="add-variant" onClick={() => setVariants((current) => [...current, { color: '', scent: '', composition: '', sort_order: current.length }])}><Plus /> Ajouter une variante</button></fieldset>
+        <label>Description courte<input value={form.short_description} onChange={(event) => update('short_description', event.target.value)} placeholder="Une phrase visible dans le catalogue" required /></label>
+        <label>Description détaillée<textarea value={form.description} onChange={(event) => update('description', event.target.value)} rows={4} required /></label>
+        <div className="form-grid"><label>Poids / format<input value={form.weight ?? ''} onChange={(event) => update('weight', event.target.value)} placeholder="180 g" /></label><label>Ordre d’affichage<input type="number" value={form.sort_order} onChange={(event) => update('sort_order', Number(event.target.value))} /></label></div>
+        <label>Photo<input className="file-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />{form.image_url && <small>Une image est déjà associée à ce produit.</small>}</label>
+        <div className="switches"><label><input type="checkbox" checked={form.price_visible} onChange={(event) => update('price_visible', event.target.checked)} /><span />Afficher le prix sur le site</label><label><input type="checkbox" checked={form.published} onChange={(event) => update('published', event.target.checked)} /><span />Visible dans la boutique</label><label><input type="checkbox" checked={form.featured} onChange={(event) => update('featured', event.target.checked)} /><span />Afficher parmi les créations phares</label></div>
+        {error && <div className="form-error">{error}</div>}<footer><button type="button" className="button button--light" onClick={onClose}>Annuler</button><button className="button button--dark" disabled={saving}>{saving ? <><LoaderCircle className="spin" /> Enregistrement…</> : 'Enregistrer'}</button></footer>
+      </form>
+    </motion.section>
+  </motion.div>
 }
 
 export default function App() {
   const path = usePath()
-  const page = useMemo(() => path.startsWith('/admin') ? <Admin /> : path.startsWith('/catalogue') ? <Catalogue /> : <Home />, [path])
+  const page = useMemo(() => path.startsWith('/admin') ? <Admin /> : path.startsWith('/catalogue') ? <Catalogue /> : path.startsWith('/galerie') ? <GalleryPage /> : path.startsWith('/marches') ? <MarketsPage /> : <Home />, [path])
   return page
 }
