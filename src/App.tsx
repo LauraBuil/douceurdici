@@ -41,7 +41,7 @@ function Header() {
 }
 
 function Footer() {
-  return <footer id="contact" className="footer"><div className="footer-grid"><Logo /><div><h3>Boutique</h3><button onClick={() => navigate('/catalogue?categorie=bougie')}>Bougies</button><button onClick={() => navigate('/catalogue?categorie=savon')}>Savons</button><button onClick={() => navigate('/catalogue?categorie=coffret')}>Coffrets</button></div><div><h3>La maison</h3><a href="/#histoire">Notre histoire</a><a href="/#recharge">Notre engagement</a><a href="mailto:bonjour@douceurdici.com">Nous écrire</a></div><div><h3>Nous retrouver</h3><a href="https://www.instagram.com/" target="_blank" rel="noreferrer"><AtSign size={17} /> Instagram</a><a href="mailto:bonjour@douceurdici.com">bonjour@douceurdici.com</a></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Douceur d’ici</span><span>Fabriqué avec soin dans les Pyrénées</span><button onClick={() => navigate('/admin')}>Administration</button></div></footer>
+  return <footer id="contact" className="footer"><div className="footer-grid"><Logo /><div><h3>Boutique</h3><button onClick={() => navigate('/catalogue?categorie=bougie')}>Bougies</button><button onClick={() => navigate('/catalogue?categorie=savon')}>Savons</button><button onClick={() => navigate('/catalogue?categorie=coffret')}>Coffrets</button></div><div><h3>La maison</h3><a href="/#histoire">Notre histoire</a><a href="/#recharge">Notre engagement</a><a href="mailto:bonjour@douceurdici.com">Nous écrire</a></div><div><h3>Nous retrouver</h3><a href="https://www.instagram.com/" target="_blank" rel="noreferrer"><AtSign size={17} /> Instagram</a><a href="mailto:bonjour@douceurdici.com">bonjour@douceurdici.com</a></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Douceur d’ici</span><span>Fabriqué avec soin dans les Pyrénées</span><div className="footer-legal-links"><button onClick={() => navigate('/mentions-legales')}>Mentions légales</button><button onClick={() => navigate('/admin')}>Administration</button></div></div></footer>
 }
 
 function ProductCard({ product }: { product: Product }) {
@@ -143,6 +143,25 @@ function MarketsPage() {
   }, [])
   const dateLabel = (date: string) => new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(date))
   return <><Header /><main className="content-page"><header className="content-hero"><span className="eyebrow">Retrouvez-nous</span><h1>Calendrier des marchés</h1><p>Les prochaines dates où découvrir nos créations et nous rencontrer.</p></header><section className="market-list section-shell">{loading ? <div className="page-loading"><LoaderCircle className="spin" /> Chargement du calendrier…</div> : markets.length ? markets.map((market) => <article key={market.id}><CalendarDays /><div><time dateTime={market.start_date}>{dateLabel(market.start_date)}</time><h2>{market.name}</h2><strong>{market.location}</strong>{market.details && <p>{market.details}</p>}</div></article>) : <div className="empty-state"><CalendarDays /><h2>Les prochaines dates arrivent.</h2><p>Le calendrier des marchés sera mis à jour prochainement.</p></div>}</section></main><Footer /></>
+}
+
+function LegalNoticePage() {
+  return <><Header /><main className="legal-page">
+    <header className="legal-heading"><span className="eyebrow">Informations légales</span><h1>Mentions légales</h1><p>Informations relatives à l’édition et au fonctionnement du site douceurdici.com.</p></header>
+    <div className="legal-layout">
+      <aside><p>Dernière mise à jour</p><strong>14 septembre 2026</strong><a href="mailto:bonjour@douceurdici.com">Nous contacter</a></aside>
+      <div className="legal-content">
+        <section><h2>1. Éditeur du site</h2><p>Le site <strong>douceurdici.com</strong> est édité par Douceur d’ici, artisan de bougies et savons dans les Pyrénées.</p><div className="legal-todo"><strong>À compléter avant la mise en production</strong><p>Nom et prénom ou raison sociale, forme juridique, adresse de domiciliation, numéro SIREN ou SIRET, immatriculation au RNE/RCS, capital social et numéro de TVA intracommunautaire lorsqu’ils sont applicables.</p></div><p>Adresse électronique : <a href="mailto:bonjour@douceurdici.com">bonjour@douceurdici.com</a></p></section>
+        <section><h2>2. Direction de la publication</h2><p>La direction de la publication est assurée par la personne responsable de Douceur d’ici.</p><div className="legal-todo"><strong>À compléter avant la mise en production</strong><p>Nom et prénom de la directrice ou du directeur de la publication.</p></div></section>
+        <section><h2>3. Hébergement</h2><p>Le site est hébergé par <strong>Hostinger International Limited</strong>, société privée à responsabilité limitée de droit chypriote, 61 Lordou Vironos Street, 6023 Larnaca, Chypre.</p><p><a href="https://www.hostinger.fr/" target="_blank" rel="noreferrer">www.hostinger.fr</a></p></section>
+        <section><h2>4. Propriété intellectuelle</h2><p>Les textes, photographies, illustrations, éléments graphiques, logos et créations présentés sur ce site sont protégés par le droit de la propriété intellectuelle. Sauf autorisation écrite préalable, toute reproduction, représentation, adaptation ou exploitation, totale ou partielle, est interdite.</p></section>
+        <section><h2>5. Responsabilité</h2><p>Douceur d’ici veille à fournir des informations aussi exactes et à jour que possible. Ces informations sont données à titre indicatif et peuvent évoluer. Douceur d’ici ne peut garantir l’absence d’erreur ou l’accès continu au site.</p></section>
+        <section><h2>6. Données personnelles</h2><p>Les messages envoyés à l’adresse de contact sont utilisés uniquement pour répondre à la demande reçue. Des données techniques peuvent être traitées par l’hébergeur pour assurer la sécurité et le bon fonctionnement du site.</p><p>Pour toute question ou pour exercer vos droits d’accès, de rectification, d’effacement, de limitation ou d’opposition, écrivez à <a href="mailto:bonjour@douceurdici.com">bonjour@douceurdici.com</a>.</p></section>
+        <section><h2>7. Cookies et stockage local</h2><p>Le site public ne dépose pas de cookies publicitaires ou de mesure d’audience. L’espace d’administration utilise uniquement les mécanismes techniques nécessaires à l’authentification et à la sécurité de la session.</p></section>
+        <section><h2>8. Liens externes</h2><p>Le site peut contenir des liens vers des services tiers. Douceur d’ici n’exerce aucun contrôle sur leur contenu ni sur leurs pratiques de confidentialité.</p></section>
+      </div>
+    </div>
+  </main><Footer /></>
 }
 
 function Admin() {
@@ -341,6 +360,6 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null,
 
 export default function App() {
   const path = usePath()
-  const page = useMemo(() => path.startsWith('/admin') ? <Admin /> : path.startsWith('/catalogue') ? <Catalogue /> : path.startsWith('/galerie') ? <GalleryPage /> : path.startsWith('/marches') ? <MarketsPage /> : <Home />, [path])
+  const page = useMemo(() => path.startsWith('/admin') ? <Admin /> : path.startsWith('/catalogue') ? <Catalogue /> : path.startsWith('/galerie') ? <GalleryPage /> : path.startsWith('/marches') ? <MarketsPage /> : path.startsWith('/mentions-legales') ? <LegalNoticePage /> : <Home />, [path])
   return page
 }
