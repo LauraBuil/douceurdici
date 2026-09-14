@@ -5,7 +5,12 @@ const jsonHeaders = { "Content-Type": "application/json" }
 const allowedHosts = new Set(["douceurdici.com", "www.douceurdici.com", "dev.douceurdici.com", "127.0.0.1", "localhost"])
 
 function response(body: Record<string, unknown>, status: number, origin: string) {
-  return new Response(JSON.stringify(body), { status, headers: { ...jsonHeaders, "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "authorization, content-type, apikey" } })
+  return new Response(JSON.stringify(body), { status, headers: {
+    ...jsonHeaders,
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-retry-count, traceparent, tracestate, baggage",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  } })
 }
 
 Deno.serve(async (request) => {
