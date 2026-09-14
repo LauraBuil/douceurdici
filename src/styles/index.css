@@ -127,6 +127,13 @@ img { display:block; max-width:100%; }
 .fragrance-list article { padding:1rem 1.1rem; border-left:2px solid var(--olive); background:#f2ede4; }
 .fragrance-list strong { font-family:Didot,'Abhaya Libre',serif; font-size:1.2rem; font-weight:500; }
 .fragrance-list p { margin:.3rem 0 0; color:var(--muted); font-size:.85rem; line-height:1.55; }
+.product-fragrances { position:relative; margin-top:1.6rem; padding:1.7rem; border:1px solid #d9cfbf; background:linear-gradient(135deg,#f7f2e9 0%,#eee7dc 100%); }
+.product-fragrances:before { content:''; position:absolute; top:0; left:1.7rem; width:54px; height:2px; background:var(--olive); }
+.product-fragrances header { margin-bottom:1rem; }
+.product-fragrances h2 { margin:.35rem 0 0; font-family:Didot,'Abhaya Libre',serif; font-size:clamp(1.65rem,2.5vw,2.15rem); font-weight:500; }
+.fragrance-list--gallery { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.fragrance-list--gallery article { min-height:115px; padding:1rem; display:grid; grid-template-columns:24px 1fr; gap:.7rem; border-left:0; background:rgba(255,254,250,.7); }
+.fragrance-mark { color:var(--olive); font-size:1rem; }
 .product-detail-loading { min-height:70vh; padding:10rem 1.5rem; display:grid; place-items:center; align-content:center; gap:1rem; text-align:center; background:var(--paper); }
 .story { display:grid; grid-template-columns:1.05fr 1.02fr .98fr; min-height:305px; margin-bottom:2.5rem; background:#f3ede2; }
 .story-image { overflow:hidden; }
@@ -245,12 +252,14 @@ img { display:block; max-width:100%; }
 .settings-panel { min-width:0; padding:1.5rem; border:1px solid #ded8cc; background:white; }
 .settings-panel>header h2 { margin:0; font-family:Didot,'Abhaya Libre',serif; font-size:2rem; font-weight:500; }
 .settings-panel>header p { margin:.35rem 0 1.5rem; color:var(--muted); line-height:1.55; }
-.settings-add-form { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto; gap:.8rem; align-items:end; padding:1rem; background:#f5f1e9; }
+.settings-add-form { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto auto; gap:.8rem; align-items:end; padding:1rem; background:#f5f1e9; }
 .settings-add-form label { display:flex; flex-direction:column; gap:.35rem; color:#504b42; font-size:.78rem; font-weight:600; }
 .settings-add-form input,.settings-add-form select,.settings-add-form textarea { width:100%; border:1px solid #c8bea9; padding:.75rem .8rem; background:#fffefa; }
-.settings-add-form--color { grid-template-columns:1fr 90px auto; }
+.settings-add-form--color { grid-template-columns:1fr 90px auto auto; }
 .settings-add-form--color input[type='color'] { height:44px; padding:.25rem; }
-.settings-add-form--fragrance { grid-template-columns:.8fr 1.5fr auto; }
+.settings-add-form--fragrance { grid-template-columns:.8fr 1.5fr auto auto; }
+.settings-cancel { min-height:44px; border:1px solid #cec4b5; padding:.65rem .8rem; display:flex; align-items:center; gap:.35rem; background:white; color:var(--muted); cursor:pointer; }
+.settings-cancel svg { width:15px; }
 .settings-notice { color:var(--olive-dark); font-size:.82rem; }
 .settings-list { margin-top:1rem; display:grid; gap:.45rem; }
 .settings-list article { min-width:0; padding:.8rem 1rem; display:grid; grid-template-columns:32px minmax(0,1fr) auto; align-items:center; gap:.7rem; border:1px solid #e1dbd0; }
@@ -259,7 +268,11 @@ img { display:block; max-width:100%; }
 .settings-list article>div { min-width:0; }
 .settings-list strong,.settings-list small { display:block; }
 .settings-list small { margin-top:.2rem; overflow:hidden; color:var(--muted); font-size:.75rem; line-height:1.4; text-overflow:ellipsis; }
-.settings-list article>button { border:1px solid #d6cdbf; padding:.45rem .65rem; background:white; color:var(--muted); font-size:.7rem; cursor:pointer; }
+.settings-actions { display:flex; justify-content:flex-end; gap:.35rem; }
+.settings-actions button { min-height:34px; border:1px solid #d6cdbf; padding:.4rem .55rem; display:flex; align-items:center; gap:.3rem; background:white; color:var(--muted); font-size:.7rem; cursor:pointer; }
+.settings-actions button:hover { border-color:var(--olive); color:var(--olive-dark); }
+.settings-actions button.danger { color:#944b40; }
+.settings-actions svg { width:14px; }
 .color-chip { width:27px; height:27px; border:1px solid rgba(35,32,27,.2); display:block; }
 .admin-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; }
 .admin-cards button { min-height:190px; padding:1.4rem; display:grid; grid-template-columns:1fr auto; grid-template-rows:auto 1fr auto; gap:.3rem; border:1px solid #ded8cc; background:white; text-align:left; cursor:pointer; transition:transform .2s,border-color .2s; }
@@ -445,6 +458,7 @@ button.danger { color:#964a3f; }
   .product-detail-grid { grid-template-columns:1fr; }
   .product-detail-copy h1 { font-size:3.1rem; }
   .product-thumbnails { grid-template-columns:repeat(4,1fr); }
+  .fragrance-list--gallery { grid-template-columns:1fr; }
   .story { grid-template-columns:1fr; }
   .story-image { min-height:320px; }
   .story-copy,.story blockquote { padding:2.3rem 1.5rem; }
@@ -486,7 +500,7 @@ button.danger { color:#964a3f; }
   .settings-panel { padding:1rem; }
   .settings-add-form,.settings-add-form--color,.settings-add-form--fragrance { grid-template-columns:1fr; }
   .settings-list article { grid-template-columns:28px minmax(0,1fr); }
-  .settings-list article>button { grid-column:2; justify-self:start; }
+  .settings-actions { grid-column:2; justify-content:flex-start; flex-wrap:wrap; }
   .admin-gallery-grid { grid-template-columns:1fr; }
   .admin-market-list article { grid-template-columns:32px 1fr; }
   .admin-market-list article>div:last-child { grid-column:1/-1; justify-content:flex-end; }
