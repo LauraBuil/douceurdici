@@ -1,34 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowDown, ArrowUp, CalendarDays, ChevronLeft, ChevronRight, Image as ImageIcon, LoaderCircle, MapPin, Pencil, Plus, Save, ShoppingBag, ShoppingCart, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, CalendarDays, ChevronLeft, ChevronRight, Image as ImageIcon, LoaderCircle, MapPin, Pencil, Plus, Save, ShoppingBag, Trash2 } from 'lucide-react'
 import type { GalleryImage, Market } from './data'
 import { supabase } from './lib/supabase'
 
-export type AdminView = 'overview' | 'products' | 'gallery' | 'markets'
+export type AdminView = 'overview' | 'products' | 'gallery' | 'markets' | 'settings'
 
 export function AdminOverview({ onOpen, productCount }: { onOpen: (view: AdminView) => void; productCount: number }) {
   const [counts, setCounts] = useState({ gallery: 0, markets: 0 })
-  const [cartEnabled, setCartEnabled] = useState(false)
-  const [savingCart, setSavingCart] = useState(false)
   useEffect(() => {
     Promise.all([
       supabase!.from('gallery_images').select('id', { count: 'exact', head: true }),
       supabase!.from('markets').select('id', { count: 'exact', head: true }),
-      supabase!.from('site_settings').select('boolean_value').eq('id', 'cart_enabled').single(),
-    ]).then(([gallery, markets, cart]) => { setCounts({ gallery: gallery.count ?? 0, markets: markets.count ?? 0 }); setCartEnabled(Boolean(cart.data?.boolean_value)) })
+    ]).then(([gallery, markets]) => { setCounts({ gallery: gallery.count ?? 0, markets: markets.count ?? 0 }) })
   }, [])
-  const updateCart = async (enabled: boolean) => {
-    setSavingCart(true)
-    const { error } = await supabase!.from('site_settings').upsert({ id: 'cart_enabled', boolean_value: enabled })
-    if (!error) setCartEnabled(enabled)
-    setSavingCart(false)
-  }
   const cards = [
     { view: 'products' as const, label: 'Produits', value: productCount, unit: 'créations', icon: ShoppingBag },
     { view: 'gallery' as const, label: 'Galerie photos', value: counts.gallery, unit: 'photos', icon: ImageIcon },
     { view: 'markets' as const, label: 'Calendrier des marchés', value: counts.markets, unit: 'dates', icon: CalendarDays },
   ]
-  return <div className="admin-overview"><div className="admin-cards">{cards.map(({ view, label, value, unit, icon: Icon }) => <button key={view} onClick={() => onOpen(view)}><Icon /><span>{label}</span><strong>{value}</strong><small>{unit}</small></button>)}</div><section className="admin-shop-setting"><ShoppingCart /><div><h2>Panier du site</h2><p>Laissez-le désactivé tant que la vente en ligne n’est pas ouverte.</p></div><label className="admin-switch"><input type="checkbox" checked={cartEnabled} disabled={savingCart} onChange={(event) => void updateCart(event.target.checked)} /><span /><strong>{savingCart ? 'Enregistrement…' : cartEnabled ? 'Panier activé' : 'Panier désactivé'}</strong></label></section><section className="admin-help"><h2>Comment ça marche</h2><ul><li>Un contenu en <strong>brouillon</strong> reste invisible sur le site.</li><li>Chaque produit accepte plusieurs variantes : associez une <strong>couleur</strong>, un <strong>parfum</strong> et sa <strong>composition</strong>.</li><li>Vous pouvez enregistrer un prix puis choisir de le <strong>masquer</strong> en attendant la boutique en ligne.</li><li>Les photos de la galerie et les marchés publiés apparaissent automatiquement sur leurs pages publiques.</li></ul></section></div>
+  return <div className="admin-overview"><div className="admin-cards">{cards.map(({ view, label, value, unit, icon: Icon }) => <button key={view} onClick={() => onOpen(view)}><Icon /><span>{label}</span><strong>{value}</strong><small>{unit}</small></button>)}</div><section className="admin-help"><h2>Comment ça marche</h2><ul><li>Un contenu en <strong>brouillon</strong> reste invisible sur le site.</li><li>Les <strong>couleurs</strong> sont indépendantes des parfums et s’affichent sous forme de nuancier.</li><li>La <strong>composition</strong> est enregistrée une seule fois avec son parfum, puis réutilisée sur les produits.</li><li>Chaque produit peut présenter plusieurs photos et associer une photo à une couleur.</li><li>Vous pouvez enregistrer un prix puis choisir de le <strong>masquer</strong> en attendant la boutique en ligne.</li></ul></section></div>
 }
 
 export function AdminGallery() {
@@ -44,7 +35,12 @@ export function AdminGallery() {
     const { data } = await supabase!.from('gallery_images').select('*').order('sort_order')
     setImages((data ?? []) as GalleryImage[]); setLoading(false)
   }
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void supabase!.from('gallery_images').select('*').order('sort_order').then(({ data }) => {
+      setImages((data ?? []) as GalleryImage[])
+      setLoading(false)
+    })
+  }, [])
   const add = async (event: FormEvent) => {
     event.preventDefault()
     if (!file) return
@@ -96,7 +92,12 @@ export function AdminMarkets() {
     const { data } = await supabase!.from('markets').select('*').order('start_date')
     setMarkets((data ?? []) as Market[]); setLoading(false)
   }
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void supabase!.from('markets').select('*').order('start_date').then(({ data }) => {
+      setMarkets((data ?? []) as Market[])
+      setLoading(false)
+    })
+  }, [])
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setSaving(true); setNotice('')
     const payload = { ...form, start_date: new Date(form.start_date).toISOString(), end_date: form.end_date ? new Date(form.end_date).toISOString() : null }

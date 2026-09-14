@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowRight, AtSign, CalendarDays, Check, ChevronDown, Flame, Heart, Image as ImageIcon, LayoutDashboard, Leaf, LoaderCircle, LogOut, Menu, PackagePlus, Pencil, Plus, Recycle, ShoppingBag, Sparkles, Trash2, X } from 'lucide-react'
+import { ArrowRight, AtSign, CalendarDays, Check, ChevronDown, ChevronLeft, Flame, Heart, Image as ImageIcon, LayoutDashboard, Leaf, LoaderCircle, LogOut, Menu, PackagePlus, Pencil, Recycle, Settings, ShoppingBag, Sparkles, Trash2, Upload, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { categoryLabels, demoProducts, formatPrice, type Category, type GalleryImage, type Market, type Product, type ProductVariant } from './data'
+import { demoProducts, formatPrice, productCategoryLabel, productPrimaryImage, type CatalogCategory, type CatalogColor, type CatalogFragrance, type GalleryImage, type Market, type Product, type ProductImage, type StaffRole } from './data'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { AdminGallery, AdminMarkets, AdminOverview, type AdminView } from './AdminExtras'
+import { AdminSettings } from './AdminSettings'
 
-const emptyProduct: Omit<Product, 'id'> = { name: '', slug: '', category: 'bougie', short_description: '', description: '', price: 0, price_visible: true, color: '', scent: '', composition: '', weight: '', image_url: '', featured: false, published: true, sort_order: 0 }
+const PRODUCT_SELECT = '*, category_record:catalog_categories(*), product_colors(color_id,color:catalog_colors(*)), product_fragrances(fragrance_id,fragrance:catalog_fragrances(*)), product_images(*)'
+const emptyProduct: Omit<Product, 'id'> = { name: '', slug: '', category: '', category_id: null, short_description: '', description: '', price: 0, price_visible: true, color: '', scent: '', composition: '', weight: '', image_url: '', featured: false, published: true, sort_order: 0 }
 
 function navigate(path: string) {
   window.history.pushState({}, '', path)
@@ -45,24 +47,23 @@ function Footer() {
 }
 
 function ProductCard({ product }: { product: Product }) {
-  const variants = product.product_variants ?? []
-  const colors = [...new Set(variants.map((variant) => variant.color).filter(Boolean))]
-  const scents = [...new Set(variants.map((variant) => variant.scent).filter(Boolean))]
-  const details = [scents.length && `Parfums : ${scents.join(', ')}`, colors.length && `Couleurs : ${colors.join(', ')}`, product.weight].filter(Boolean).join(' · ')
-  return <article className="product-card"><div className="product-image-wrap"><img src={product.image_url || '/assets/creations-douceur-dici.jpg'} alt={product.name} /><span>{categoryLabels[product.category]}</span><button aria-label={`Ajouter ${product.name} aux favoris`}><Heart size={18} /></button></div><div className="product-info"><div><h3>{product.name}</h3><p>{details || product.short_description}</p>{variants.length === 1 && variants[0].composition && <small>{variants[0].composition}</small>}</div>{product.price_visible !== false && <strong>{formatPrice(Number(product.price))}</strong>}</div></article>
+  const colors = (product.product_colors ?? []).map((link) => link.color).filter(Boolean) as CatalogColor[]
+  const fragrances = (product.product_fragrances ?? []).map((link) => link.fragrance).filter(Boolean) as CatalogFragrance[]
+  const details = [fragrances.length && `Parfums : ${fragrances.map((item) => item.name).join(', ')}`, product.weight].filter(Boolean).join(' · ')
+  return <article className="product-card"><button className="product-card-link" onClick={() => navigate(`/produit/${product.slug}`)} aria-label={`Voir ${product.name}`}><div className="product-image-wrap"><img src={productPrimaryImage(product)} alt={product.name} /><span>{productCategoryLabel(product)}</span><span className="favorite-mark"><Heart size={18} /></span></div><div className="product-info"><div><h3>{product.name}</h3><p>{details || product.short_description}</p>{colors.length > 0 && <span className="mini-swatches" aria-label={`${colors.length} couleurs disponibles`}>{colors.slice(0, 6).map((color) => <i key={color.id} style={{ backgroundColor: color.hex_code }} title={color.name} />)}</span>}</div>{product.price_visible !== false && <strong>{formatPrice(Number(product.price))}</strong>}</div></button></article>
 }
 
 function variantSummary(product: Product) {
-  const variants = product.product_variants ?? []
-  if (variants.length) return variants.map((variant) => `${variant.scent} · ${variant.color}`).join(' | ')
-  return [product.scent, product.color].filter(Boolean).join(' · ') || '—'
+  const colors = (product.product_colors ?? []).map((link) => link.color?.name).filter(Boolean)
+  const fragrances = (product.product_fragrances ?? []).map((link) => link.fragrance?.name).filter(Boolean)
+  return [fragrances.length ? fragrances.join(', ') : null, colors.length ? colors.join(', ') : null].filter(Boolean).join(' · ') || '—'
 }
 
 function usePublicProducts() {
   const [products, setProducts] = useState<Product[]>(demoProducts)
   useEffect(() => {
     if (!supabase) return
-    supabase.from('products').select('*, product_variants(*)').eq('published', true).order('sort_order').then(({ data, error }) => { if (!error && data?.length) setProducts(data as Product[]) })
+    supabase.from('products').select(PRODUCT_SELECT).eq('published', true).order('sort_order').then(({ data, error }) => { if (!error && data?.length) setProducts(data as Product[]) })
   }, [])
   return products
 }
@@ -118,17 +119,37 @@ function Home() {
 
 function Catalogue() {
   const products = usePublicProducts()
-  const initial = new URLSearchParams(window.location.search).get('categorie') as Category | null
-  const [filter, setFilter] = useState<Category | 'tous'>(initial && categoryLabels[initial] ? initial : 'tous')
-  const filtered = filter === 'tous' ? products : products.filter((product) => product.category === filter)
-  return <><Header /><main className="catalogue-page"><section className="catalogue-hero"><span className="eyebrow">La boutique</span><h1>Nos créations artisanales</h1><p>Des bougies, savons et coffrets préparés en petites séries dans les Pyrénées.</p></section><section className="catalogue-content section-shell"><div className="filters" role="group" aria-label="Filtrer le catalogue"><button className={filter === 'tous' ? 'active' : ''} onClick={() => setFilter('tous')}>Tout</button>{(Object.keys(categoryLabels) as Category[]).map((key) => <button key={key} className={filter === key ? 'active' : ''} onClick={() => setFilter(key)}>{categoryLabels[key]}</button>)}</div>{filtered.length ? <div className="product-grid product-grid--catalogue">{filtered.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><Leaf /><h2>Cette collection arrive bientôt.</h2><p>De nouvelles créations sont en préparation à l’atelier.</p></div>}</section></main><Footer /></>
+  const initial = new URLSearchParams(window.location.search).get('categorie') ?? 'tous'
+  const [filter, setFilter] = useState(initial)
+  const categories = [...new Map(products.map((product) => [product.category_record?.slug ?? product.category, productCategoryLabel(product)])).entries()]
+  const filtered = filter === 'tous' ? products : products.filter((product) => product.category === filter || product.category_record?.slug === filter)
+  return <><Header /><main className="catalogue-page"><section className="catalogue-hero"><span className="eyebrow">La boutique</span><h1>Nos créations artisanales</h1><p>Des bougies, savons et coffrets préparés en petites séries dans les Pyrénées.</p></section><section className="catalogue-content section-shell"><div className="filters" role="group" aria-label="Filtrer le catalogue"><button className={filter === 'tous' ? 'active' : ''} onClick={() => setFilter('tous')}>Tout</button>{categories.map(([slug, label]) => <button key={slug} className={filter === slug ? 'active' : ''} onClick={() => setFilter(slug)}>{label}</button>)}</div>{filtered.length ? <div className="product-grid product-grid--catalogue">{filtered.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><Leaf /><h2>Cette collection arrive bientôt.</h2><p>De nouvelles créations sont en préparation à l’atelier.</p></div>}</section></main><Footer /></>
+}
+
+function ProductDetailPage({ slug }: { slug: string }) {
+  const [product, setProduct] = useState<Product | null>(demoProducts.find((item) => item.slug === slug) ?? null)
+  const [loading, setLoading] = useState(Boolean(supabase))
+  const [selectedImage, setSelectedImage] = useState('')
+  const [selectedColor, setSelectedColor] = useState<string | null>(null)
+  useEffect(() => {
+    if (!supabase) return
+    supabase.from('products').select(PRODUCT_SELECT).eq('slug', slug).eq('published', true).maybeSingle().then(({ data }) => { setProduct(data as Product | null); setLoading(false) })
+  }, [slug])
+  const allImages = useMemo(() => product ? [...(product.product_images ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order) : [], [product])
+  const visibleImages = selectedColor ? allImages.filter((image) => !image.color_id || image.color_id === selectedColor) : allImages
+  const imageUrl = selectedImage && visibleImages.some((image) => image.image_url === selectedImage) ? selectedImage : visibleImages[0]?.image_url || (product ? productPrimaryImage(product) : '')
+  if (loading) return <><Header /><main className="product-detail-loading"><LoaderCircle className="spin" /> Chargement de la création…</main><Footer /></>
+  if (!product) return <><Header /><main className="product-detail-loading"><Leaf /><h1>Cette création n’est pas disponible.</h1><button className="button button--dark" onClick={() => navigate('/catalogue')}>Retour au catalogue</button></main><Footer /></>
+  const colors = (product.product_colors ?? []).map((link) => link.color).filter(Boolean) as CatalogColor[]
+  const fragrances = (product.product_fragrances ?? []).map((link) => link.fragrance).filter(Boolean) as CatalogFragrance[]
+  return <><Header /><main className="product-detail"><button className="product-back" onClick={() => navigate('/catalogue')}><ChevronLeft /> Retour au catalogue</button><div className="product-detail-grid"><section className="product-gallery"><div className="product-main-image"><img src={imageUrl} alt={product.name} /></div>{allImages.length > 1 && <div className="product-thumbnails">{visibleImages.map((image) => <button key={image.id} className={image.image_url === imageUrl ? 'active' : ''} onClick={() => setSelectedImage(image.image_url)}><img src={image.image_url} alt={image.alt_text || product.name} /></button>)}</div>}</section><section className="product-detail-copy"><span className="eyebrow">{productCategoryLabel(product)}</span><h1>{product.name}</h1><p className="product-lead">{product.short_description}</p>{product.price_visible && <strong className="product-price">{formatPrice(Number(product.price))}</strong>}<p>{product.description}</p>{product.weight && <p className="product-format">Format : <strong>{product.weight}</strong></p>}{colors.length > 0 && <div className="product-options"><h2>Couleurs disponibles</h2><div className="color-swatches">{colors.map((color) => <button key={color.id} className={selectedColor === color.id ? 'active' : ''} onClick={() => { setSelectedColor(selectedColor === color.id ? null : color.id); setSelectedImage('') }} aria-label={`Voir la couleur ${color.name}`}><span style={{ backgroundColor: color.hex_code }} /><small>{color.name}</small></button>)}</div></div>}{fragrances.length > 0 && <div className="product-options"><h2>Parfums et compositions</h2><div className="fragrance-list">{fragrances.map((fragrance) => <article key={fragrance.id}><strong>{fragrance.name}</strong><p>{fragrance.composition}</p></article>)}</div></div>}</section></div></main><Footer /></>
 }
 
 function GalleryPage() {
   const [images, setImages] = useState<GalleryImage[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(Boolean(supabase))
   useEffect(() => {
-    if (!supabase) { setLoading(false); return }
+    if (!supabase) return
     supabase.from('gallery_images').select('*').eq('published', true).order('sort_order').then(({ data }) => { setImages((data ?? []) as GalleryImage[]); setLoading(false) })
   }, [])
   return <><Header /><main className="content-page"><header className="content-hero"><span className="eyebrow">L’univers Douceur d’ici</span><h1>Galerie</h1><p>Créations, matières et instants de l’atelier au fil des saisons.</p></header><section className="public-gallery section-shell">{loading ? <div className="page-loading"><LoaderCircle className="spin" /> Chargement des photos…</div> : images.length ? images.map((item) => <figure key={item.id}><img src={item.image_url} alt={item.alt_text || item.caption || 'Création Douceur d’ici'} loading="lazy" /><figcaption>{item.caption}</figcaption></figure>) : <div className="empty-state"><ImageIcon /><h2>La galerie se prépare.</h2><p>Les premières photos seront bientôt ajoutées.</p></div>}</section></main><Footer /></>
@@ -136,9 +157,9 @@ function GalleryPage() {
 
 function MarketsPage() {
   const [markets, setMarkets] = useState<Market[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(Boolean(supabase))
   useEffect(() => {
-    if (!supabase) { setLoading(false); return }
+    if (!supabase) return
     supabase.from('markets').select('*').eq('published', true).gte('start_date', new Date().toISOString()).order('start_date').then(({ data }) => { setMarkets((data ?? []) as Market[]); setLoading(false) })
   }, [])
   const dateLabel = (date: string) => new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(date))
@@ -166,7 +187,7 @@ function LegalNoticePage() {
 
 function Admin() {
   const [sessionUser, setSessionUser] = useState<string | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [role, setRole] = useState<StaffRole | null>(null)
   const [checking, setChecking] = useState(isSupabaseConfigured)
   const [message, setMessage] = useState('')
 
@@ -178,9 +199,9 @@ function Admin() {
       const user = session?.user
       setSessionUser(user?.email ?? null)
       if (user) {
-        const { data } = await client.from('admins').select('user_id').eq('user_id', user.id).maybeSingle()
-        setIsAdmin(Boolean(data))
-      } else setIsAdmin(false)
+        const { data } = await client.from('admins').select('role,active').eq('user_id', user.id).maybeSingle()
+        setRole(data?.active ? data.role as StaffRole : null)
+      } else setRole(null)
       setChecking(false)
     }
     check()
@@ -191,8 +212,8 @@ function Admin() {
   if (!isSupabaseConfigured) return <AdminSetup />
   if (checking) return <div className="admin-loading"><LoaderCircle className="spin" /><span>Ouverture de l’atelier…</span></div>
   if (!sessionUser) return <AdminLogin onMessage={setMessage} message={message} />
-  if (!isAdmin) return <div className="admin-denied"><Logo /><h1>Accès réservé</h1><p>Ce compte existe, mais il n’a pas encore été autorisé à administrer le catalogue.</p><button className="button button--dark" onClick={() => supabase?.auth.signOut()}>Changer de compte</button></div>
-  return <AdminDashboard email={sessionUser} />
+  if (!role) return <div className="admin-denied"><Logo /><h1>Accès réservé</h1><p>Ce compte existe, mais il n’a pas encore été autorisé à administrer le catalogue.</p><button className="button button--dark" onClick={() => supabase?.auth.signOut()}>Changer de compte</button></div>
+  return <AdminDashboard email={sessionUser} role={role} />
 }
 
 function AdminSetup() {
@@ -211,17 +232,22 @@ function AdminLogin({ onMessage, message }: { onMessage: (message: string) => vo
   return <div className="admin-login"><div className="login-visual"><Logo /><h1>L’atelier numérique</h1><p>Votre catalogue, vos nouveautés et vos coups de cœur au même endroit.</p></div><div className="login-panel"><button className="back-link" onClick={() => navigate('/')}><ArrowRight /> Retour au site</button><span className="eyebrow">Espace administrateur</span><h2>Bienvenue à l’atelier.</h2><p>Connectez-vous pour gérer le catalogue Douceur d’ici.</p><form onSubmit={submit}><label>Adresse e-mail<input type="email" name="email" required autoComplete="email" /></label><label>Mot de passe<input type="password" name="password" required autoComplete="current-password" /></label>{message && <div className="form-error">{message}</div>}<button className="button button--dark" disabled={loading}>{loading ? <LoaderCircle className="spin" /> : 'Se connecter'}</button></form></div></div>
 }
 
-function AdminDashboard({ email }: { email: string }) {
+function AdminDashboard({ email, role }: { email: string; role: StaffRole }) {
   const [view, setView] = useState<AdminView>('overview')
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Product | null | 'new'>(null)
   const [notice, setNotice] = useState('')
   const loadProducts = async () => {
-    const { data } = await supabase!.from('products').select('*, product_variants(*)').order('sort_order')
+    const { data } = await supabase!.from('products').select(PRODUCT_SELECT).order('sort_order')
     setProducts((data ?? []) as Product[]); setLoading(false)
   }
-  useEffect(() => { loadProducts() }, [])
+  useEffect(() => {
+    void supabase!.from('products').select(PRODUCT_SELECT).order('sort_order').then(({ data }) => {
+      setProducts((data ?? []) as Product[])
+      setLoading(false)
+    })
+  }, [])
   useEffect(() => {
     const context = document.modelContext
     if (!context?.registerTool) return
@@ -234,7 +260,7 @@ function AdminDashboard({ email }: { email: string }) {
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: true, untrustedContentHint: true },
       async execute() {
-        const { data, error } = await supabase!.from('products').select('id,name,category,price,price_visible,published,featured,product_variants(color,scent,composition)').order('sort_order')
+        const { data, error } = await supabase!.from('products').select('id,name,category,category_id,price,price_visible,published,featured,product_colors(color_id),product_fragrances(fragrance_id),product_images(image_url)').order('sort_order')
         if (error) throw new Error('Le catalogue est indisponible.')
         return { products: data }
       },
@@ -247,30 +273,36 @@ function AdminDashboard({ email }: { email: string }) {
         type: 'object',
         properties: {
           name: { type: 'string', minLength: 2, maxLength: 120 },
-          category: { type: 'string', enum: ['bougie', 'savon', 'diffuseur', 'coffret'] },
+          category_id: { type: 'string', minLength: 36, maxLength: 36 },
           short_description: { type: 'string' }, description: { type: 'string' },
           price: { type: 'number', minimum: 0 }, weight: { type: 'string' },
           price_visible: { type: 'boolean' }, image_url: { type: 'string' }, published: { type: 'boolean' }, featured: { type: 'boolean' },
-          variants: { type: 'array', minItems: 1, items: { type: 'object', properties: { color: { type: 'string', minLength: 1 }, scent: { type: 'string', minLength: 1 }, composition: { type: 'string', minLength: 1 } }, required: ['color', 'scent', 'composition'], additionalProperties: false } },
+          color_ids: { type: 'array', items: { type: 'string' }, uniqueItems: true },
+          fragrance_ids: { type: 'array', items: { type: 'string' }, uniqueItems: true },
         },
-        required: ['name', 'category', 'short_description', 'description', 'price', 'variants'],
+        required: ['name', 'category_id', 'short_description', 'description', 'price'],
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false, untrustedContentHint: true },
       async execute(input) {
         if (!input || typeof input !== 'object') throw new Error('Les informations de la création sont invalides.')
         const value = input as Record<string, unknown>
-        const variants = Array.isArray(value.variants) ? value.variants as Record<string, unknown>[] : []
-        const variantsAreValid = variants.length > 0 && variants.every((variant) => typeof variant.color === 'string' && variant.color.trim() && typeof variant.scent === 'string' && variant.scent.trim() && typeof variant.composition === 'string' && variant.composition.trim())
-        if (typeof value.name !== 'string' || value.name.trim().length < 2 || !['bougie', 'savon', 'diffuseur', 'coffret'].includes(String(value.category)) || typeof value.price !== 'number' || value.price < 0 || typeof value.short_description !== 'string' || typeof value.description !== 'string' || !variantsAreValid) throw new Error('Les champs obligatoires sont invalides.')
+        if (typeof value.name !== 'string' || value.name.trim().length < 2 || typeof value.category_id !== 'string' || typeof value.price !== 'number' || value.price < 0 || typeof value.short_description !== 'string' || typeof value.description !== 'string') throw new Error('Les champs obligatoires sont invalides.')
         const slug = value.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-        const firstVariant = variants[0]
-        const { data, error } = await supabase!.from('products').insert({ name: value.name.trim(), slug, category: value.category, short_description: value.short_description, description: value.description, price: value.price, price_visible: value.price_visible !== false, color: String(firstVariant.color).trim(), scent: String(firstVariant.scent).trim(), composition: String(firstVariant.composition).trim(), weight: typeof value.weight === 'string' ? value.weight : null, image_url: typeof value.image_url === 'string' ? value.image_url : '', published: value.published !== false, featured: value.featured === true }).select('id,name,slug').single()
+        const { data: category } = await supabase!.from('catalog_categories').select('id,slug,parent_id').eq('id', value.category_id).single()
+        if (!category) throw new Error('La catégorie sélectionnée est invalide.')
+        const { data: parent } = category.parent_id ? await supabase!.from('catalog_categories').select('slug').eq('id', category.parent_id).single() : { data: null }
+        const { data, error } = await supabase!.from('products').insert({ name: value.name.trim(), slug, category: parent?.slug ?? category.slug, category_id: category.id, short_description: value.short_description, description: value.description, price: value.price, price_visible: value.price_visible !== false, weight: typeof value.weight === 'string' ? value.weight : null, image_url: typeof value.image_url === 'string' ? value.image_url : '', published: value.published !== false, featured: value.featured === true }).select('id,name,slug').single()
         if (error) throw new Error('La création n’a pas pu être ajoutée.')
-        const { error: variantsError } = await supabase!.from('product_variants').insert(variants.map((variant, index) => ({ product_id: data.id, color: String(variant.color).trim(), scent: String(variant.scent).trim(), composition: String(variant.composition).trim(), sort_order: index })))
-        if (variantsError) {
+        const colors = Array.isArray(value.color_ids) ? value.color_ids.filter((id): id is string => typeof id === 'string') : []
+        const fragrances = Array.isArray(value.fragrance_ids) ? value.fragrance_ids.filter((id): id is string => typeof id === 'string') : []
+        const results = await Promise.all([
+          colors.length ? supabase!.from('product_colors').insert(colors.map((color_id) => ({ product_id: data.id, color_id }))) : Promise.resolve({ error: null }),
+          fragrances.length ? supabase!.from('product_fragrances').insert(fragrances.map((fragrance_id) => ({ product_id: data.id, fragrance_id }))) : Promise.resolve({ error: null }),
+        ])
+        if (results.some((result) => result.error)) {
           await supabase!.from('products').delete().eq('id', data.id)
-          throw new Error('Les variantes de la création n’ont pas pu être ajoutées.')
+          throw new Error('Les options de la création n’ont pas pu être ajoutées.')
         }
         await loadProducts()
         setNotice('Catalogue mis à jour.')
@@ -289,77 +321,131 @@ function AdminDashboard({ email }: { email: string }) {
     products: { title: 'Produits', description: `${products.length} création${products.length > 1 ? 's' : ''} enregistrée${products.length > 1 ? 's' : ''}` },
     gallery: { title: 'Galerie photos', description: 'Ajoutez et organisez les images présentées sur le site.' },
     markets: { title: 'Calendrier des marchés', description: 'Planifiez les prochaines dates où vous rencontrer.' },
+    settings: { title: 'Paramètres', description: 'Gérez les catégories, couleurs, parfums, comptes et options de la boutique.' },
   }
   const navItems: { id: AdminView; label: string; icon: typeof LayoutDashboard }[] = [
     { id: 'overview', label: 'Tableau de bord', icon: LayoutDashboard },
     { id: 'products', label: 'Produits', icon: ShoppingBag },
     { id: 'gallery', label: 'Galerie photos', icon: ImageIcon },
     { id: 'markets', label: 'Calendrier des marchés', icon: CalendarDays },
+    ...(role === 'admin' ? [{ id: 'settings' as const, label: 'Paramètres', icon: Settings }] : []),
   ]
-  return <div className="admin-shell"><aside className="admin-sidebar"><Logo compact /><nav>{navItems.map(({ id, label, icon: Icon }) => <button key={id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><Icon /> {label}</button>)}<button onClick={() => navigate('/')}><ArrowRight /> Voir le site</button></nav><div className="admin-account"><small>Connecté avec</small><span>{email}</span><button onClick={() => supabase!.auth.signOut()}><LogOut /> Se déconnecter</button></div></aside><main className="admin-main"><header><div><span className="eyebrow">Administration</span><h1>{labels[view].title}</h1><p>{labels[view].description}</p></div>{view === 'products' && <button className="button button--dark" onClick={() => setEditing('new')}><PackagePlus /> Ajouter un produit</button>}</header>{notice && view === 'products' && <div className="admin-notice"><Check />{notice}<button onClick={() => setNotice('')}><X /></button></div>}<div className="admin-view">{view === 'overview' && <AdminOverview productCount={products.length} onOpen={setView} />}{view === 'products' && (loading ? <div className="admin-loading-inline"><LoaderCircle className="spin" /> Chargement du catalogue…</div> : <div className="admin-table-wrap"><table><thead><tr><th>Produit</th><th>Parfum & couleur</th><th>Prix</th><th>Visibilité</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{products.map((product) => <tr key={product.id}><td><div className="table-product"><img src={product.image_url || '/assets/creations-douceur-dici.jpg'} alt="" /><div><strong>{product.name}</strong><small>{categoryLabels[product.category]} · {product.composition || product.short_description}</small></div></div></td><td>{variantSummary(product)}</td><td>{product.price_visible ? formatPrice(Number(product.price)) : <span className="status">Prix masqué</span>}</td><td><span className={product.published ? 'status status--published' : 'status'}>{product.published ? 'En ligne' : 'Brouillon'}</span></td><td><div className="row-actions"><button onClick={() => setEditing(product)} aria-label={`Modifier ${product.name}`}><Pencil /></button><button onClick={() => remove(product)} aria-label={`Supprimer ${product.name}`}><Trash2 /></button></div></td></tr>)}</tbody></table>{!products.length && <div className="empty-state"><PackagePlus /><h2>Votre catalogue est prêt.</h2><p>Ajoutez votre premier produit.</p></div>}</div>)}{view === 'gallery' && <AdminGallery />}{view === 'markets' && <AdminMarkets />}</div></main><AnimatePresence>{editing && <ProductEditor product={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); setNotice('Catalogue mis à jour.'); loadProducts() }} />}</AnimatePresence></div>
+  return <div className="admin-shell"><aside className="admin-sidebar"><Logo compact /><nav>{navItems.map(({ id, label, icon: Icon }) => <button key={id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><Icon /> {label}</button>)}<button onClick={() => navigate('/')}><ArrowRight /> Voir le site</button></nav><div className="admin-account"><small>{role === 'admin' ? 'Administrateur' : 'Exploitant'}</small><span>{email}</span><button onClick={() => supabase!.auth.signOut()}><LogOut /> Se déconnecter</button></div></aside><main className="admin-main"><header><div><span className="eyebrow">Administration</span><h1>{labels[view].title}</h1><p>{labels[view].description}</p></div>{view === 'products' && <button className="button button--dark" onClick={() => setEditing('new')}><PackagePlus /> Ajouter un produit</button>}</header>{notice && view === 'products' && <div className="admin-notice"><Check />{notice}<button onClick={() => setNotice('')}><X /></button></div>}<div className="admin-view">{view === 'overview' && <AdminOverview productCount={products.length} onOpen={setView} />}{view === 'products' && (loading ? <div className="admin-loading-inline"><LoaderCircle className="spin" /> Chargement du catalogue…</div> : <div className="admin-table-wrap"><table><thead><tr><th>Produit</th><th>Parfums & couleurs</th><th>Prix</th><th>Visibilité</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{products.map((product) => <tr key={product.id}><td><div className="table-product"><img src={productPrimaryImage(product)} alt="" /><div><strong>{product.name}</strong><small>{productCategoryLabel(product)} · {(product.product_images ?? []).length} photo{(product.product_images ?? []).length > 1 ? 's' : ''}</small></div></div></td><td>{variantSummary(product)}</td><td>{product.price_visible ? formatPrice(Number(product.price)) : <span className="status">Prix masqué</span>}</td><td><span className={product.published ? 'status status--published' : 'status'}>{product.published ? 'En ligne' : 'Brouillon'}</span></td><td><div className="row-actions"><button onClick={() => setEditing(product)} aria-label={`Modifier ${product.name}`}><Pencil /></button><button onClick={() => remove(product)} aria-label={`Supprimer ${product.name}`}><Trash2 /></button></div></td></tr>)}</tbody></table>{!products.length && <div className="empty-state"><PackagePlus /><h2>Votre catalogue est prêt.</h2><p>Ajoutez votre premier produit.</p></div>}</div>)}{view === 'gallery' && <AdminGallery />}{view === 'markets' && <AdminMarkets />}{view === 'settings' && role === 'admin' && <AdminSettings />}</div></main><AnimatePresence>{editing && <ProductEditor product={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); setNotice('Catalogue mis à jour.'); loadProducts() }} />}</AnimatePresence></div>
 }
+
+type PendingProductImage = { localId: string; file: File; color_id: string }
 
 function ProductEditor({ product, onClose, onSaved }: { product: Product | null, onClose: () => void, onSaved: () => void }) {
   const [form, setForm] = useState<Omit<Product, 'id'>>(product ? { ...emptyProduct, ...product } : emptyProduct)
-  const [variants, setVariants] = useState<ProductVariant[]>(product?.product_variants?.length ? product.product_variants : [{ color: product?.color ?? '', scent: product?.scent ?? '', composition: product?.composition ?? '', sort_order: 0 }])
-  const [file, setFile] = useState<File | null>(null)
+  const [categories, setCategories] = useState<CatalogCategory[]>([])
+  const [colors, setColors] = useState<CatalogColor[]>([])
+  const [fragrances, setFragrances] = useState<CatalogFragrance[]>([])
+  const [selectedColors, setSelectedColors] = useState<string[]>((product?.product_colors ?? []).map((link) => link.color_id))
+  const [selectedFragrances, setSelectedFragrances] = useState<string[]>((product?.product_fragrances ?? []).map((link) => link.fragrance_id))
+  const [images, setImages] = useState<ProductImage[]>([...(product?.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order))
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([])
+  const [pendingImages, setPendingImages] = useState<PendingProductImage[]>([])
+  const initialPrimary = product?.product_images?.find((image) => image.is_primary)?.id
+  const [primaryImageKey, setPrimaryImageKey] = useState(initialPrimary ? `existing:${initialPrimary}` : '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const slugify = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
   const update = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => setForm((current) => ({ ...current, [key]: value }))
+
+  useEffect(() => {
+    Promise.all([
+      supabase!.from('catalog_categories').select('*').order('sort_order'),
+      supabase!.from('catalog_colors').select('*').order('sort_order'),
+      supabase!.from('catalog_fragrances').select('*').order('sort_order'),
+    ]).then(([categoryResult, colorResult, fragranceResult]) => {
+      const availableCategories = (categoryResult.data ?? []) as CatalogCategory[]
+      setCategories(availableCategories); setColors((colorResult.data ?? []) as CatalogColor[]); setFragrances((fragranceResult.data ?? []) as CatalogFragrance[])
+      if (availableCategories[0]) {
+        setForm((current) => current.category_id ? current : { ...current, category_id: availableCategories[0].id })
+      }
+    })
+  }, [])
+
+  const toggleChoice = (value: string, selected: string[], setter: (values: string[]) => void) => setter(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value])
+  const removeExistingImage = (image: ProductImage) => { setImages((current) => current.filter((item) => item.id !== image.id)); setRemovedImageIds((current) => [...current, image.id]); if (primaryImageKey === `existing:${image.id}`) setPrimaryImageKey('') }
+
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setSaving(true); setError('')
-    if (variants.some((variant) => !variant.color.trim() || !variant.scent.trim() || !variant.composition.trim())) {
-      setError('Chaque variante doit avoir une couleur, un parfum et une composition.'); setSaving(false); return
+    const category = categories.find((item) => item.id === form.category_id)
+    if (!category) { setError('Sélectionnez une catégorie.'); setSaving(false); return }
+    const rootCategory = category.parent_id ? categories.find((item) => item.id === category.parent_id) : category
+    const payload = {
+      name: form.name,
+      slug: form.slug || slugify(form.name),
+      category: rootCategory?.slug ?? category.slug,
+      category_id: category.id,
+      short_description: form.short_description,
+      description: form.description,
+      price: Number(form.price),
+      price_visible: form.price_visible,
+      color: '',
+      scent: '',
+      composition: '',
+      weight: form.weight || null,
+      image_url: form.image_url,
+      featured: form.featured,
+      published: form.published,
+      sort_order: form.sort_order,
     }
-    const combinations = variants.map((variant) => `${variant.color.trim().toLowerCase()}|${variant.scent.trim().toLowerCase()}`)
-    if (new Set(combinations).size !== combinations.length) {
-      setError('Deux variantes utilisent la même couleur et le même parfum.'); setSaving(false); return
-    }
-    let imageUrl = form.image_url
-    if (file) {
-      const { data: { user } } = await supabase!.auth.getUser()
-      const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, '-')
-      const path = `${user!.id}/${crypto.randomUUID()}-${safeName}`
-      const upload = await supabase!.storage.from('product-images').upload(path, file, { cacheControl: '3600', upsert: false })
-      if (upload.error) { setError('L’image n’a pas pu être envoyée.'); setSaving(false); return }
-      imageUrl = supabase!.storage.from('product-images').getPublicUrl(path).data.publicUrl
-    }
-    const { product_variants: _ignored, ...productFields } = form
-    const firstVariant = variants[0]
-    const payload = { ...productFields, slug: form.slug || slugify(form.name), image_url: imageUrl, price: Number(form.price), weight: form.weight || null, color: firstVariant.color, scent: firstVariant.scent, composition: firstVariant.composition }
     const query = product ? supabase!.from('products').update(payload).eq('id', product.id).select('id').single() : supabase!.from('products').insert(payload).select('id').single()
     const { data: savedProduct, error: saveError } = await query
     if (saveError || !savedProduct) { setError(saveError?.code === '23505' ? 'Un produit utilise déjà ce nom.' : 'Le produit n’a pas pu être enregistré.'); setSaving(false); return }
-    if (product) {
-      const { error: deleteError } = await supabase!.from('product_variants').delete().eq('product_id', product.id)
-      if (deleteError) { setError('Les anciennes variantes n’ont pas pu être remplacées.'); setSaving(false); return }
+
+    await Promise.all([supabase!.from('product_colors').delete().eq('product_id', savedProduct.id), supabase!.from('product_fragrances').delete().eq('product_id', savedProduct.id)])
+    const optionResults = await Promise.all([
+      selectedColors.length ? supabase!.from('product_colors').insert(selectedColors.map((color_id) => ({ product_id: savedProduct.id, color_id }))) : Promise.resolve({ error: null }),
+      selectedFragrances.length ? supabase!.from('product_fragrances').insert(selectedFragrances.map((fragrance_id) => ({ product_id: savedProduct.id, fragrance_id }))) : Promise.resolve({ error: null }),
+    ])
+    if (optionResults.some((result) => result.error)) { setError('Le produit est enregistré, mais ses options n’ont pas pu être mises à jour.'); setSaving(false); return }
+
+    if (removedImageIds.length) await supabase!.from('product_images').delete().in('id', removedImageIds)
+    if (images.length) {
+      await supabase!.from('product_images').update({ is_primary: false }).eq('product_id', savedProduct.id)
+      const fallbackPrimary = primaryImageKey || `existing:${images[0].id}`
+      await Promise.all(images.map((image, index) => supabase!.from('product_images').update({ color_id: image.color_id || null, is_primary: fallbackPrimary === `existing:${image.id}`, sort_order: index, alt_text: image.alt_text || form.name }).eq('id', image.id)))
     }
-    const { error: variantsError } = await supabase!.from('product_variants').insert(variants.map((variant, index) => ({ product_id: savedProduct.id, color: variant.color.trim(), scent: variant.scent.trim(), composition: variant.composition.trim(), sort_order: index })))
-    if (variantsError) setError('Le produit est enregistré, mais ses variantes n’ont pas pu être ajoutées.')
-    else onSaved()
-    setSaving(false)
+
+    const { data: { user } } = await supabase!.auth.getUser()
+    const uploaded: { localId: string; image_url: string }[] = []
+    for (const pending of pendingImages) {
+      const safeName = pending.file.name.toLowerCase().replace(/[^a-z0-9.]+/g, '-')
+      const path = `${user!.id}/${crypto.randomUUID()}-${safeName}`
+      const upload = await supabase!.storage.from('product-images').upload(path, pending.file, { cacheControl: '3600', upsert: false })
+      if (upload.error) { setError('Une des photos n’a pas pu être envoyée.'); setSaving(false); return }
+      uploaded.push({ localId: pending.localId, image_url: supabase!.storage.from('product-images').getPublicUrl(path).data.publicUrl })
+    }
+    const fallbackPendingPrimary = !primaryImageKey && images.length === 0 ? pendingImages[0]?.localId : null
+    if (pendingImages.length) {
+      const { error: imageError } = await supabase!.from('product_images').insert(pendingImages.map((pending, index) => ({ product_id: savedProduct.id, color_id: pending.color_id || null, image_url: uploaded.find((item) => item.localId === pending.localId)!.image_url, alt_text: form.name, is_primary: primaryImageKey === `pending:${pending.localId}` || fallbackPendingPrimary === pending.localId, sort_order: images.length + index })))
+      if (imageError) { setError('Les photos ont été envoyées mais n’ont pas pu être associées au produit.'); setSaving(false); return }
+    }
+    const primaryExisting = images.find((image) => (primaryImageKey || `existing:${images[0]?.id}`) === `existing:${image.id}`)?.image_url
+    const primaryPendingId = primaryImageKey.startsWith('pending:') ? primaryImageKey.replace('pending:', '') : fallbackPendingPrimary
+    const primaryPending = uploaded.find((item) => item.localId === primaryPendingId)?.image_url
+    await supabase!.from('products').update({ image_url: primaryPending ?? primaryExisting ?? (images.length || pendingImages.length ? form.image_url : '') }).eq('id', savedProduct.id)
+    onSaved(); setSaving(false)
   }
-  return <motion.div className="editor-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-    <motion.section className="editor-panel" initial={{ x: 60 }} animate={{ x: 0 }} exit={{ x: 60 }} aria-modal="true" role="dialog" aria-labelledby="editor-title">
-      <header><div><span className="eyebrow">Catalogue</span><h2 id="editor-title">{product ? 'Modifier le produit' : 'Nouveau produit'}</h2></div><button onClick={onClose} aria-label="Fermer"><X /></button></header>
-      <form onSubmit={submit}>
-        <label>Nom du produit<input value={form.name} onChange={(event) => { update('name', event.target.value); if (!product) update('slug', slugify(event.target.value)) }} required /></label>
-        <div className="form-grid"><label>Collection<select value={form.category} onChange={(event) => update('category', event.target.value as Category)}>{(Object.keys(categoryLabels) as Category[]).map((key) => <option key={key} value={key}>{categoryLabels[key]}</option>)}</select><ChevronDown /></label><label>Prix en €<input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update('price', Number(event.target.value))} required /></label></div>
-        <fieldset className="variant-editor"><legend>Couleurs, parfums et compositions</legend><p>Ajoutez une ligne pour chaque combinaison proposée.</p>{variants.map((variant, index) => <div className="variant-row" key={variant.id ?? index}><label>Couleur<input value={variant.color} onChange={(event) => setVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, color: event.target.value } : item))} placeholder="Ivoire" required /></label><label>Parfum<input value={variant.scent} onChange={(event) => setVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, scent: event.target.value } : item))} placeholder="Fleur de coton" required /></label><label>Composition<textarea value={variant.composition} onChange={(event) => setVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, composition: event.target.value } : item))} rows={2} placeholder="Cire végétale, mèche coton…" required /></label><button type="button" disabled={variants.length === 1} onClick={() => setVariants((current) => current.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Supprimer la variante ${index + 1}`}><Trash2 /></button></div>)}<button type="button" className="add-variant" onClick={() => setVariants((current) => [...current, { color: '', scent: '', composition: '', sort_order: current.length }])}><Plus /> Ajouter une variante</button></fieldset>
-        <label>Description courte<input value={form.short_description} onChange={(event) => update('short_description', event.target.value)} placeholder="Une phrase visible dans le catalogue" required /></label>
-        <label>Description détaillée<textarea value={form.description} onChange={(event) => update('description', event.target.value)} rows={4} required /></label>
-        <div className="form-grid"><label>Poids / format<input value={form.weight ?? ''} onChange={(event) => update('weight', event.target.value)} placeholder="180 g" /></label><label>Ordre d’affichage<input type="number" value={form.sort_order} onChange={(event) => update('sort_order', Number(event.target.value))} /></label></div>
-        <label>Photo<input className="file-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />{form.image_url && <small>Une image est déjà associée à ce produit.</small>}</label>
-        <div className="switches"><label><input type="checkbox" checked={form.price_visible} onChange={(event) => update('price_visible', event.target.checked)} /><span />Afficher le prix sur le site</label><label><input type="checkbox" checked={form.published} onChange={(event) => update('published', event.target.checked)} /><span />Visible dans la boutique</label><label><input type="checkbox" checked={form.featured} onChange={(event) => update('featured', event.target.checked)} /><span />Afficher parmi les créations phares</label></div>
-        {error && <div className="form-error">{error}</div>}<footer><button type="button" className="button button--light" onClick={onClose}>Annuler</button><button className="button button--dark" disabled={saving}>{saving ? <><LoaderCircle className="spin" /> Enregistrement…</> : 'Enregistrer'}</button></footer>
-      </form>
-    </motion.section>
-  </motion.div>
+
+  const activeCategories = categories.filter((item) => item.active || item.id === form.category_id)
+  const roots = categories.filter((item) => !item.parent_id)
+  return <motion.div className="editor-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><motion.section className="editor-panel" initial={{ x: 60 }} animate={{ x: 0 }} exit={{ x: 60 }} aria-modal="true" role="dialog" aria-labelledby="editor-title"><header><div><span className="eyebrow">Catalogue</span><h2 id="editor-title">{product ? 'Modifier le produit' : 'Nouveau produit'}</h2></div><button onClick={onClose} aria-label="Fermer"><X /></button></header><form onSubmit={submit}>
+    <label>Nom du produit<input value={form.name} onChange={(event) => { update('name', event.target.value); if (!product) update('slug', slugify(event.target.value)) }} required /></label>
+    <div className="form-grid"><label>Catégorie<select value={form.category_id ?? ''} onChange={(event) => update('category_id', event.target.value)} required><option value="" disabled>Choisir une catégorie</option>{activeCategories.map((item) => <option key={item.id} value={item.id}>{item.parent_id ? `↳ ${roots.find((root) => root.id === item.parent_id)?.name} — ${item.name}` : item.name}</option>)}</select><ChevronDown /></label><label>Prix en €<input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update('price', Number(event.target.value))} required /></label></div>
+    <fieldset className="catalog-choice"><legend>Couleurs disponibles</legend><p>Les couleurs sont indépendantes des parfums.</p><div className="choice-grid">{colors.filter((item) => item.active || selectedColors.includes(item.id)).map((color) => <label key={color.id} className={selectedColors.includes(color.id) ? 'selected' : ''}><input type="checkbox" checked={selectedColors.includes(color.id)} onChange={() => toggleChoice(color.id, selectedColors, setSelectedColors)} /><span className="color-chip" style={{ backgroundColor: color.hex_code }} />{color.name}</label>)}</div>{!colors.length && <small>Ajoutez d’abord des couleurs dans Paramètres.</small>}</fieldset>
+    <fieldset className="catalog-choice"><legend>Parfums proposés</legend><p>La composition affichée vient automatiquement du parfum sélectionné.</p><div className="fragrance-choice-grid">{fragrances.filter((item) => item.active || selectedFragrances.includes(item.id)).map((fragrance) => <label key={fragrance.id} className={selectedFragrances.includes(fragrance.id) ? 'selected' : ''}><input type="checkbox" checked={selectedFragrances.includes(fragrance.id)} onChange={() => toggleChoice(fragrance.id, selectedFragrances, setSelectedFragrances)} /><span><strong>{fragrance.name}</strong><small>{fragrance.composition}</small></span></label>)}</div>{!fragrances.length && <small>Ajoutez d’abord des parfums dans Paramètres.</small>}</fieldset>
+    <label>Description courte<input value={form.short_description} onChange={(event) => update('short_description', event.target.value)} placeholder="Une phrase visible dans le catalogue" required /></label><label>Description détaillée<textarea value={form.description} onChange={(event) => update('description', event.target.value)} rows={4} required /></label><div className="form-grid"><label>Poids / format<input value={form.weight ?? ''} onChange={(event) => update('weight', event.target.value)} placeholder="180 g" /></label><label>Ordre d’affichage<input type="number" value={form.sort_order} onChange={(event) => update('sort_order', Number(event.target.value))} /></label></div>
+    <fieldset className="product-images-editor"><legend>Galerie du produit</legend><p>Ajoutez plusieurs photos et associez chacune à une couleur si vous le souhaitez.</p><label className="multi-upload"><Upload />Ajouter des photos<input type="file" multiple accept="image/png,image/jpeg,image/webp" onChange={(event) => { const additions = Array.from(event.target.files ?? []).map((file) => ({ localId: crypto.randomUUID(), file, color_id: '' })); setPendingImages((current) => [...current, ...additions]); event.currentTarget.value = '' }} /></label><div className="product-image-list">{images.map((image) => <article key={image.id}><img src={image.image_url} alt={image.alt_text} /><div><select value={image.color_id ?? ''} onChange={(event) => setImages((current) => current.map((item) => item.id === image.id ? { ...item, color_id: event.target.value || null } : item))}><option value="">Toutes les couleurs</option>{colors.map((color) => <option key={color.id} value={color.id}>{color.name}</option>)}</select><label><input type="radio" name="primary-image" checked={primaryImageKey === `existing:${image.id}` || (!primaryImageKey && image === images[0])} onChange={() => setPrimaryImageKey(`existing:${image.id}`)} /> Photo principale</label></div><button type="button" onClick={() => removeExistingImage(image)} aria-label="Retirer cette photo"><Trash2 /></button></article>)}{pendingImages.map((pending) => <article key={pending.localId}><div className="pending-image-name"><ImageIcon />{pending.file.name}</div><div><select value={pending.color_id} onChange={(event) => setPendingImages((current) => current.map((item) => item.localId === pending.localId ? { ...item, color_id: event.target.value } : item))}><option value="">Toutes les couleurs</option>{colors.map((color) => <option key={color.id} value={color.id}>{color.name}</option>)}</select><label><input type="radio" name="primary-image" checked={primaryImageKey === `pending:${pending.localId}` || (!primaryImageKey && !images.length && pending === pendingImages[0])} onChange={() => setPrimaryImageKey(`pending:${pending.localId}`)} /> Photo principale</label></div><button type="button" onClick={() => { setPendingImages((current) => current.filter((item) => item.localId !== pending.localId)); if (primaryImageKey === `pending:${pending.localId}`) setPrimaryImageKey('') }} aria-label="Retirer cette photo"><Trash2 /></button></article>)}</div></fieldset>
+    <div className="switches"><label><input type="checkbox" checked={form.price_visible} onChange={(event) => update('price_visible', event.target.checked)} /><span />Afficher le prix sur le site</label><label><input type="checkbox" checked={form.published} onChange={(event) => update('published', event.target.checked)} /><span />Visible dans la boutique</label><label><input type="checkbox" checked={form.featured} onChange={(event) => update('featured', event.target.checked)} /><span />Afficher parmi les créations phares</label></div>{error && <div className="form-error">{error}</div>}<footer><button type="button" className="button button--light" onClick={onClose}>Annuler</button><button className="button button--dark" disabled={saving}>{saving ? <><LoaderCircle className="spin" /> Enregistrement…</> : 'Enregistrer'}</button></footer>
+  </form></motion.section></motion.div>
 }
 
 export default function App() {
   const path = usePath()
-  const page = useMemo(() => path.startsWith('/admin') ? <Admin /> : path.startsWith('/catalogue') ? <Catalogue /> : path.startsWith('/galerie') ? <GalleryPage /> : path.startsWith('/marches') ? <MarketsPage /> : path.startsWith('/mentions-legales') ? <LegalNoticePage /> : <Home />, [path])
+  const page = useMemo(() => path.startsWith('/admin') ? <Admin /> : path.startsWith('/produit/') ? <ProductDetailPage slug={decodeURIComponent(path.replace('/produit/', ''))} /> : path.startsWith('/catalogue') ? <Catalogue /> : path.startsWith('/galerie') ? <GalleryPage /> : path.startsWith('/marches') ? <MarketsPage /> : path.startsWith('/mentions-legales') ? <LegalNoticePage /> : <Home />, [path])
   return page
 }
