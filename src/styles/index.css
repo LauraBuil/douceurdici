@@ -379,9 +379,9 @@ button.danger { color:#964a3f; }
 .switches input:checked+span { background:var(--olive); }
 .switches input:checked+span:after { transform:translateX(17px); }
 .editor-panel form>footer { padding-top:1rem; display:flex; justify-content:flex-end; gap:.7rem; }
-.catalog-choice,.product-images-editor { margin:0; padding:1rem; border:1px solid #d8cfbf; background:#f7f3ec; }
-.catalog-choice legend,.product-images-editor legend { padding:0 .45rem; color:var(--olive-dark); font-size:.8rem; font-weight:700; }
-.catalog-choice>p,.product-images-editor>p { margin:0 0 .8rem; color:var(--muted); font-size:.77rem; line-height:1.5; }
+.catalog-choice,.product-images-editor,.product-category-choice { margin:0; padding:1rem; border:1px solid #d8cfbf; background:#f7f3ec; }
+.catalog-choice legend,.product-images-editor legend,.product-category-choice legend { padding:0 .45rem; color:var(--olive-dark); font-size:.8rem; font-weight:700; }
+.catalog-choice>p,.product-images-editor>p,.product-category-choice>p { margin:0 0 .8rem; color:var(--muted); font-size:.77rem; line-height:1.5; }
 .choice-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.45rem; }
 .choice-grid label { border:1px solid #ddd4c5; padding:.65rem; flex-direction:row; align-items:center; background:white; cursor:pointer; }
 .choice-grid label.selected,.fragrance-choice-grid label.selected { border-color:var(--olive); background:#eeeee5; }
