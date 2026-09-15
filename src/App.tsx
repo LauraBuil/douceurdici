@@ -10,21 +10,34 @@ import { AdminSettings } from './AdminSettings'
 const PRODUCT_SELECT = '*, category_record:catalog_categories(*), product_colors(color_id,color:catalog_colors(*)), product_fragrances(fragrance_id,fragrance:catalog_fragrances(*)), product_images(*)'
 const emptyProduct: Omit<Product, 'id'> = { name: '', slug: '', category: '', category_id: null, short_description: '', description: '', price: 0, price_visible: true, color: '', scent: '', composition: '', weight: '', image_url: '', featured: false, published: true, sort_order: 0 }
 
-function navigate(path: string) {
-  window.history.pushState({}, '', path)
+const currentPathWithSearch = () => `${window.location.pathname}${window.location.search}`
+
+function navigate(path: string, state: Record<string, string> = {}) {
+  window.history.pushState(state, '', path)
   window.dispatchEvent(new PopStateEvent('popstate'))
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function usePath() {
-  const [path, setPath] = useState(window.location.pathname)
+  const [path, setPath] = useState(currentPathWithSearch)
   useEffect(() => {
-    const update = () => setPath(window.location.pathname)
+    const update = () => setPath(currentPathWithSearch())
     window.addEventListener('popstate', update)
     return () => window.removeEventListener('popstate', update)
   }, [])
   return path
 }
+
+const categoryAliases: Record<string, string> = {
+  bougies: 'bougie',
+  savons: 'savon',
+  coffrets: 'coffret',
+  fondants: 'fondant',
+  diffuseurs: 'diffuseur',
+  parfums: 'diffuseur',
+}
+
+const normalizeCategorySlug = (slug: string) => categoryAliases[slug] ?? slug
 
 function Logo({ compact = false }: { compact?: boolean }) {
   return <a href="/" onClick={(event) => { event.preventDefault(); navigate('/') }} className={`brand ${compact ? 'brand--compact' : ''}`} aria-label="Douceur d'ici, accueil"><img src="/assets/logo-douceur-dici.png" alt="" /><span><strong>Douceur d’ici</strong><small>Artisan des Pyrénées</small></span></a>
@@ -38,9 +51,9 @@ function Header() {
     <nav className={open ? 'nav nav--open' : 'nav'} aria-label="Navigation principale">
       <button onClick={() => go('/catalogue?categorie=bougie')}>Bougies</button>
       <button onClick={() => go('/catalogue?categorie=savon')}>Savons</button>
-      <button onClick={() => go('/catalogue?categorie=coffrets')}>Coffrets</button>
-      <button onClick={() => go('/catalogue?categorie=fondants')}>Fondants</button>
-      <button onClick={() => go('/catalogue?categorie=diffuseurs')}>Diffuseurs</button>
+      <button onClick={() => go('/catalogue?categorie=coffret')}>Coffrets</button>
+      <button onClick={() => go('/catalogue?categorie=fondant')}>Fondants</button>
+      <button onClick={() => go('/catalogue?categorie=diffuseur')}>Diffuseurs</button>
       <button onClick={() => go('/galerie')}>Galerie</button>
       <button onClick={() => go('/marches')}>Marchés</button>
       {/*<a href="/#histoire" onClick={() => setOpen(false)}>Notre histoire</a>*/}
@@ -58,9 +71,9 @@ function Footer() {
       <h3>Boutique</h3>
       <button onClick={() => navigate('/catalogue?categorie=bougie')}>Bougies</button>
       <button onClick={() => navigate('/catalogue?categorie=savon')}>Savons</button>
-      <button onClick={() => navigate('/catalogue?categorie=coffrets')}>Coffrets</button>
-      <button onClick={() => navigate('/catalogue?categorie=fondants')}>Fondants</button>
-      <button onClick={() => navigate('/catalogue?categorie=diffuseurs')}>Diffuseurs</button>
+      <button onClick={() => navigate('/catalogue?categorie=coffret')}>Coffrets</button>
+      <button onClick={() => navigate('/catalogue?categorie=fondant')}>Fondants</button>
+      <button onClick={() => navigate('/catalogue?categorie=diffuseur')}>Diffuseurs</button>
     </div>
       <div>
         <h3>La maison</h3>
@@ -89,13 +102,22 @@ function ProductCard({ product }: { product: Product }) {
   const colors = (product.product_colors ?? []).map((link) => link.color).filter(Boolean) as CatalogColor[]
   const fragrances = (product.product_fragrances ?? []).map((link) => link.fragrance).filter(Boolean) as CatalogFragrance[]
   const details = [fragrances.length && `Parfums : ${fragrances.map((item) => item.name).join(', ')}`, product.weight].filter(Boolean).join(' · ')
-  return <article className="product-card"><button className="product-card-link" onClick={() => navigate(`/produit/${product.slug}`)} aria-label={`Voir ${product.name}`}><div className="product-image-wrap"><img src={productPrimaryImage(product)} alt={product.name} /><span>{productCategoryLabel(product)}</span><span className="favorite-mark"><Heart size={18} /></span></div><div className="product-info"><div><h3>{product.name}</h3><p>{details || product.short_description}</p>{colors.length > 0 && <span className="mini-swatches" aria-label={`${colors.length} couleurs disponibles`}>{colors.slice(0, 6).map((color) => <i key={color.id} style={{ backgroundColor: color.hex_code }} title={color.name} />)}</span>}</div>{product.price_visible !== false && <strong>{formatPrice(Number(product.price))}</strong>}</div></button></article>
+  const cataloguePath = window.location.pathname.startsWith('/catalogue') ? currentPathWithSearch() : '/catalogue'
+  return <article className="product-card"><button className="product-card-link" onClick={() => navigate(`/produit/${product.slug}`, { cataloguePath })} aria-label={`Voir ${product.name}`}><div className="product-image-wrap"><img src={productPrimaryImage(product)} alt={product.name} /><span>{productCategoryLabel(product)}</span><span className="favorite-mark"><Heart size={18} /></span></div><div className="product-info"><div><h3>{product.name}</h3><p>{details || product.short_description}</p>{colors.length > 0 && <span className="mini-swatches" aria-label={`${colors.length} couleurs disponibles`}>{colors.slice(0, 6).map((color) => <i key={color.id} style={{ backgroundColor: color.hex_code }} title={color.name} />)}</span>}</div>{product.price_visible !== false && <strong>{formatPrice(Number(product.price))}</strong>}</div></button></article>
 }
 
 function variantSummary(product: Product) {
   const colors = (product.product_colors ?? []).map((link) => link.color?.name).filter(Boolean)
   const fragrances = (product.product_fragrances ?? []).map((link) => link.fragrance?.name).filter(Boolean)
   return [fragrances.length ? fragrances.join(', ') : null, colors.length ? colors.join(', ') : null].filter(Boolean).join(' · ') || '—'
+}
+
+function FragranceComposition({ composition }: { composition: string }) {
+  const marker = composition.match(/caract[eé]ristiques\s*:?/i)
+  if (!marker || marker.index === undefined) return <div className="fragrance-composition"><div className="fragrance-description"><span>Description</span><p>{composition}</p></div></div>
+  const description = composition.slice(0, marker.index).trim()
+  const characteristics = composition.slice(marker.index + marker[0].length).split('•').map((item) => item.trim()).filter(Boolean)
+  return <div className="fragrance-composition">{description && <div className="fragrance-description"><span>Description</span>{description.split(/\n+/).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div>}{characteristics.length > 0 && <div className="fragrance-characteristics"><span>Caractéristiques</span><ul>{characteristics.map((characteristic) => <li key={characteristic}><i aria-hidden="true">•</i><p>{characteristic}</p></li>)}</ul></div>}</div>
 }
 
 function usePublicProducts() {
@@ -164,11 +186,25 @@ function Home() {
 
 function Catalogue() {
   const products = usePublicProducts()
-  const initial = new URLSearchParams(window.location.search).get('categorie') ?? 'tous'
-  const [filter, setFilter] = useState(initial)
-  const categories = [...new Map(products.map((product) => [product.category_record?.slug ?? product.category, productCategoryLabel(product)])).entries()]
-  const filtered = filter === 'tous' ? products : products.filter((product) => product.category === filter || product.category_record?.slug === filter)
-  return <><Header /><main className="catalogue-page"><section className="catalogue-hero"><span className="eyebrow">La boutique</span><h1>Mes créations artisanales</h1><p>Des bougies, savons, coffrets, fondants et diffuseurs préparés en petites séries dans les Pyrénées.</p></section><section className="catalogue-content section-shell"><div className="filters" role="group" aria-label="Filtrer le catalogue"><button className={filter === 'tous' ? 'active' : ''} onClick={() => setFilter('tous')}>Tout</button>{categories.map(([slug, label]) => <button key={slug} className={filter === slug ? 'active' : ''} onClick={() => setFilter(slug)}>{label}</button>)}</div>{filtered.length ? <div className="product-grid product-grid--catalogue">{filtered.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><Leaf /><h2>Cette collection arrive bientôt.</h2><p>De nouvelles créations sont en préparation à l’atelier.</p></div>}</section></main><Footer /></>
+  const [catalogCategories, setCatalogCategories] = useState<CatalogCategory[]>([])
+  const filter = normalizeCategorySlug(new URLSearchParams(window.location.search).get('categorie') ?? 'tous')
+  useEffect(() => {
+    if (!supabase) return
+    supabase.from('catalog_categories').select('*').eq('active', true).order('sort_order').then(({ data }) => setCatalogCategories((data ?? []) as CatalogCategory[]))
+  }, [])
+  const productCategories = products.map((product) => product.category_record).filter(Boolean) as CatalogCategory[]
+  const categories = catalogCategories.length ? catalogCategories : [...new Map(productCategories.map((category) => [category.id, category])).values()]
+  const roots = categories.filter((category) => !category.parent_id)
+  const selectedCategory = categories.find((category) => category.slug === filter)
+  const selectedRoot = selectedCategory?.parent_id ? roots.find((category) => category.id === selectedCategory.parent_id) : selectedCategory
+  const children = selectedRoot ? categories.filter((category) => category.parent_id === selectedRoot.id) : []
+  const filtered = filter === 'tous' ? products : products.filter((product) => {
+    if (!selectedCategory) return product.category === filter || product.category_record?.slug === filter
+    if (selectedCategory.parent_id) return product.category_id === selectedCategory.id || product.category_record?.slug === selectedCategory.slug
+    return product.category === selectedCategory.slug || product.category_id === selectedCategory.id || product.category_record?.parent_id === selectedCategory.id
+  })
+  const chooseFilter = (slug: string) => navigate(slug === 'tous' ? '/catalogue' : `/catalogue?categorie=${encodeURIComponent(slug)}`)
+  return <><Header /><main className="catalogue-page"><section className="catalogue-hero"><span className="eyebrow">La boutique</span><h1>Mes créations artisanales</h1><p>Des bougies, savons, coffrets, fondants et diffuseurs préparés en petites séries dans les Pyrénées.</p></section><section className="catalogue-content section-shell"><div className="filters" role="group" aria-label="Filtrer le catalogue"><button className={filter === 'tous' ? 'active' : ''} onClick={() => chooseFilter('tous')}>Tout</button>{roots.map((category) => <button key={category.id} className={selectedRoot?.id === category.id ? 'active' : ''} onClick={() => chooseFilter(category.slug)}>{category.name}</button>)}</div>{children.length > 0 && <div className="subfilters" role="group" aria-label={`Sous-catégories de ${selectedRoot?.name}`}><button className={filter === selectedRoot?.slug ? 'active' : ''} onClick={() => chooseFilter(selectedRoot!.slug)}>Toute la collection</button>{children.map((category) => <button key={category.id} className={filter === category.slug ? 'active' : ''} onClick={() => chooseFilter(category.slug)}>{category.name}</button>)}</div>}{filtered.length ? <div className="product-grid product-grid--catalogue">{filtered.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><Leaf /><h2>Cette collection arrive bientôt.</h2><p>De nouvelles créations sont en préparation à l’atelier.</p></div>}</section></main><Footer /></>
 }
 
 function ProductDetailPage({ slug }: { slug: string }) {
@@ -187,7 +223,8 @@ function ProductDetailPage({ slug }: { slug: string }) {
   if (!product) return <><Header /><main className="product-detail-loading"><Leaf /><h1>Cette création n’est pas disponible.</h1><button className="button button--dark" onClick={() => navigate('/catalogue')}>Retour au catalogue</button></main><Footer /></>
   const colors = (product.product_colors ?? []).map((link) => link.color).filter(Boolean) as CatalogColor[]
   const fragrances = (product.product_fragrances ?? []).map((link) => link.fragrance).filter(Boolean) as CatalogFragrance[]
-  return <><Header /><main className="product-detail"><button className="product-back" onClick={() => navigate('/catalogue')}><ChevronLeft /> Retour au catalogue</button><div className="product-detail-grid"><section className="product-gallery"><div className="product-main-image"><img src={imageUrl} alt={product.name} /></div>{allImages.length > 1 && <div className="product-thumbnails">{visibleImages.map((image) => <button key={image.id} className={image.image_url === imageUrl ? 'active' : ''} onClick={() => setSelectedImage(image.image_url)}><img src={image.image_url} alt={image.alt_text || product.name} /></button>)}</div>}{fragrances.length > 0 && <section className="product-fragrances"><header><span className="eyebrow">La signature olfactive</span><h2>Parfums & compositions</h2></header><div className="fragrance-list fragrance-list--gallery">{fragrances.map((fragrance) => <article key={fragrance.id}><span className="fragrance-mark" aria-hidden="true">✦</span><div><strong>{fragrance.name}</strong><p>{fragrance.composition}</p></div></article>)}</div></section>}</section><section className="product-detail-copy"><span className="eyebrow">{productCategoryLabel(product)}</span><h1>{product.name}</h1><p className="product-lead">{product.short_description}</p>{product.price_visible && <strong className="product-price">{formatPrice(Number(product.price))}</strong>}<p>{product.description}</p>{product.weight && <p className="product-format">Format : <strong>{product.weight}</strong></p>}{colors.length > 0 && <div className="product-options"><h2>Couleurs disponibles</h2><div className="color-swatches">{colors.map((color) => <button key={color.id} className={selectedColor === color.id ? 'active' : ''} onClick={() => { setSelectedColor(selectedColor === color.id ? null : color.id); setSelectedImage('') }} aria-label={`Voir la couleur ${color.name}`}><span style={{ backgroundColor: color.hex_code }} /><small>{color.name}</small></button>)}</div></div>}</section></div></main><Footer /></>
+  const cataloguePath = typeof window.history.state?.cataloguePath === 'string' && window.history.state.cataloguePath.startsWith('/catalogue') ? window.history.state.cataloguePath : '/catalogue'
+  return <><Header /><main className="product-detail"><button className="product-back" onClick={() => navigate(cataloguePath)}><ChevronLeft /> Retour au catalogue</button><div className="product-detail-grid"><section className="product-gallery"><div className="product-main-image"><img src={imageUrl} alt={product.name} /></div>{allImages.length > 1 && <div className="product-thumbnails">{visibleImages.map((image) => <button key={image.id} className={image.image_url === imageUrl ? 'active' : ''} onClick={() => setSelectedImage(image.image_url)}><img src={image.image_url} alt={image.alt_text || product.name} /></button>)}</div>}{fragrances.length > 0 && <section className="product-fragrances"><header><span className="eyebrow">La signature olfactive</span><h2>Parfums & compositions</h2></header><div className="fragrance-list fragrance-list--gallery">{fragrances.map((fragrance, index) => <article key={fragrance.id}><div className="fragrance-heading"><span className="fragrance-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><strong>{fragrance.name}</strong></div><FragranceComposition composition={fragrance.composition} /></article>)}</div></section>}</section><section className="product-detail-copy"><span className="eyebrow">{productCategoryLabel(product)}</span><h1>{product.name}</h1><p className="product-lead">{product.short_description}</p>{product.price_visible && <strong className="product-price">{formatPrice(Number(product.price))}</strong>}<p>{product.description}</p>{product.weight && <p className="product-format">Format : <strong>{product.weight}</strong></p>}{colors.length > 0 && <div className="product-options"><h2>Couleurs disponibles</h2><div className="color-swatches">{colors.map((color) => <button key={color.id} className={selectedColor === color.id ? 'active' : ''} onClick={() => { setSelectedColor(selectedColor === color.id ? null : color.id); setSelectedImage('') }} aria-label={`Voir la couleur ${color.name}`}><span style={{ backgroundColor: color.hex_code }} /><small>{color.name}</small></button>)}</div></div>}</section></div></main><Footer /></>
 }
 
 function GalleryPage() {
@@ -405,8 +442,9 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null,
     ]).then(([categoryResult, colorResult, fragranceResult]) => {
       const availableCategories = (categoryResult.data ?? []) as CatalogCategory[]
       setCategories(availableCategories); setColors((colorResult.data ?? []) as CatalogColor[]); setFragrances((fragranceResult.data ?? []) as CatalogFragrance[])
-      if (availableCategories[0]) {
-        setForm((current) => current.category_id ? current : { ...current, category_id: availableCategories[0].id })
+      const defaultCategory = availableCategories.find((category) => !category.parent_id && category.active) ?? availableCategories.find((category) => category.active)
+      if (defaultCategory) {
+        setForm((current) => current.category_id ? current : { ...current, category_id: defaultCategory.id })
       }
     })
   }, [])
@@ -478,9 +516,14 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null,
 
   const activeCategories = categories.filter((item) => item.active || item.id === form.category_id)
   const roots = categories.filter((item) => !item.parent_id)
+  const selectedCategory = categories.find((item) => item.id === form.category_id)
+  const selectedRootId = selectedCategory?.parent_id ?? selectedCategory?.id ?? ''
+  const availableRoots = roots.filter((item) => item.active || item.id === selectedRootId)
+  const availableSubcategories = activeCategories.filter((item) => item.parent_id === selectedRootId)
   return <motion.div className="editor-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><motion.section className="editor-panel" initial={{ x: 60 }} animate={{ x: 0 }} exit={{ x: 60 }} aria-modal="true" role="dialog" aria-labelledby="editor-title"><header><div><span className="eyebrow">Catalogue</span><h2 id="editor-title">{product ? 'Modifier le produit' : 'Nouveau produit'}</h2></div><button onClick={onClose} aria-label="Fermer"><X /></button></header><form onSubmit={submit}>
     <label>Nom du produit<input value={form.name} onChange={(event) => { update('name', event.target.value); if (!product) update('slug', slugify(event.target.value)) }} required /></label>
-    <div className="form-grid"><label>Catégorie<select value={form.category_id ?? ''} onChange={(event) => update('category_id', event.target.value)} required><option value="" disabled>Choisir une catégorie</option>{activeCategories.map((item) => <option key={item.id} value={item.id}>{item.parent_id ? `↳ ${roots.find((root) => root.id === item.parent_id)?.name} — ${item.name}` : item.name}</option>)}</select><ChevronDown /></label><label>Prix en €<input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update('price', Number(event.target.value))} required /></label></div>
+    <fieldset className="product-category-choice"><legend>Classement du produit</legend><p>Choisissez d’abord la famille, puis une sous-catégorie si elle correspond au produit.</p><div className="form-grid"><label>Catégorie principale<select value={selectedRootId} onChange={(event) => update('category_id', event.target.value)} required><option value="" disabled>Choisir une catégorie</option>{availableRoots.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><ChevronDown /></label><label>Sous-catégorie<select value={selectedCategory?.parent_id ? selectedCategory.id : ''} onChange={(event) => update('category_id', event.target.value || selectedRootId)} disabled={!selectedRootId || availableSubcategories.length === 0}><option value="">Aucune — collection générale</option>{availableSubcategories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><ChevronDown /></label></div></fieldset>
+    <label>Prix en €<input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update('price', Number(event.target.value))} required /></label>
     <fieldset className="catalog-choice"><legend>Couleurs disponibles</legend><p>Les couleurs sont indépendantes des parfums.</p><div className="choice-grid">{colors.filter((item) => item.active || selectedColors.includes(item.id)).map((color) => <label key={color.id} className={selectedColors.includes(color.id) ? 'selected' : ''}><input type="checkbox" checked={selectedColors.includes(color.id)} onChange={() => toggleChoice(color.id, selectedColors, setSelectedColors)} /><span className="color-chip" style={{ backgroundColor: color.hex_code }} />{color.name}</label>)}</div>{!colors.length && <small>Ajoutez d’abord des couleurs dans Paramètres.</small>}</fieldset>
     <fieldset className="catalog-choice"><legend>Parfums proposés</legend><p>La composition affichée vient automatiquement du parfum sélectionné.</p><div className="fragrance-choice-grid">{fragrances.filter((item) => item.active || selectedFragrances.includes(item.id)).map((fragrance) => <label key={fragrance.id} className={selectedFragrances.includes(fragrance.id) ? 'selected' : ''}><input type="checkbox" checked={selectedFragrances.includes(fragrance.id)} onChange={() => toggleChoice(fragrance.id, selectedFragrances, setSelectedFragrances)} /><span><strong>{fragrance.name}</strong><small>{fragrance.composition}</small></span></label>)}</div>{!fragrances.length && <small>Ajoutez d’abord des parfums dans Paramètres.</small>}</fieldset>
     <label>Description courte<input value={form.short_description} onChange={(event) => update('short_description', event.target.value)} placeholder="Une phrase visible dans le catalogue" required /></label><label>Description détaillée<textarea value={form.description} onChange={(event) => update('description', event.target.value)} rows={4} required /></label><div className="form-grid"><label>Poids / format<input value={form.weight ?? ''} onChange={(event) => update('weight', event.target.value)} placeholder="180 g" /></label><label>Ordre d’affichage<input type="number" value={form.sort_order} onChange={(event) => update('sort_order', Number(event.target.value))} /></label></div>
@@ -495,6 +538,7 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null,
 
 export default function App() {
   const path = usePath()
-  const page = useMemo(() => path.startsWith('/admin') ? <Admin /> : path.startsWith('/produit/') ? <ProductDetailPage slug={decodeURIComponent(path.replace('/produit/', ''))} /> : path.startsWith('/catalogue') ? <Catalogue /> : path.startsWith('/galerie') ? <GalleryPage /> : path.startsWith('/marches') ? <MarketsPage /> : path.startsWith('/mentions-legales') ? <LegalNoticePage /> : <Home />, [path])
+  const pathname = path.split('?')[0]
+  const page = pathname.startsWith('/admin') ? <Admin /> : pathname.startsWith('/produit/') ? <ProductDetailPage slug={decodeURIComponent(pathname.replace('/produit/', ''))} /> : pathname.startsWith('/catalogue') ? <Catalogue /> : pathname.startsWith('/galerie') ? <GalleryPage /> : pathname.startsWith('/marches') ? <MarketsPage /> : pathname.startsWith('/mentions-legales') ? <LegalNoticePage /> : <Home />
   return page
 }
