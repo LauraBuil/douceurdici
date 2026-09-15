@@ -132,8 +132,13 @@ img { display:block; max-width:100%; }
 .product-fragrances header { margin-bottom:1rem; }
 .product-fragrances h2 { margin:.35rem 0 0; font-family:Didot,'Abhaya Libre',serif; font-size:clamp(1.65rem,2.5vw,2.15rem); font-weight:500; }
 .fragrance-list--gallery { grid-template-columns:repeat(2,minmax(0,1fr)); }
-.fragrance-list--gallery article { min-height:115px; padding:1rem; display:grid; grid-template-columns:24px 1fr; gap:.7rem; border-left:0; background:rgba(255,254,250,.7); }
-.fragrance-mark { color:var(--olive); font-size:1rem; }
+.fragrance-list--gallery article { min-height:148px; padding:0; display:flex; flex-direction:column; border:1px solid #d3c7b5; background:rgba(255,254,250,.82); box-shadow:0 8px 24px rgba(70,61,44,.06); overflow:hidden; }
+.fragrance-heading { min-height:58px; padding:.85rem 1rem; display:flex; align-items:center; gap:.8rem; border-bottom:1px solid #ded4c5; background:rgba(230,222,207,.55); }
+.fragrance-heading strong { font-size:1.3rem; }
+.fragrance-number { width:30px; height:30px; display:grid; place-items:center; flex:0 0 auto; border:1px solid var(--olive); color:var(--olive-dark); font-family:'Red Hat Text',sans-serif; font-size:.68rem; letter-spacing:.08em; }
+.fragrance-composition { padding:.9rem 1rem 1rem; }
+.fragrance-composition>span { display:block; color:var(--olive-dark); font-size:.67rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; }
+.fragrance-composition p { margin:.4rem 0 0; }
 .product-detail-loading { min-height:70vh; padding:10rem 1.5rem; display:grid; place-items:center; align-content:center; gap:1rem; text-align:center; background:var(--paper); }
 .story { display:grid; grid-template-columns:1.05fr 1.02fr .98fr; min-height:305px; margin-bottom:2.5rem; background:#f3ede2; }
 .story-image { overflow:hidden; }
@@ -206,6 +211,9 @@ img { display:block; max-width:100%; }
 .filters { margin-bottom:2.5rem; display:flex; justify-content:center; flex-wrap:wrap; gap:.5rem; }
 .filters button { border:1px solid var(--line); padding:.65rem 1rem; background:white; color:var(--muted); cursor:pointer; }
 .filters button.active { border-color:var(--olive); background:var(--olive); color:white; }
+.subfilters { margin:-1.5rem auto 2.5rem; padding:1rem; width:min(920px,100%); display:flex; justify-content:center; flex-wrap:wrap; gap:.55rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.subfilters button { border:0; border-bottom:1px solid transparent; padding:.45rem .35rem; background:transparent; color:var(--muted); cursor:pointer; }
+.subfilters button:hover,.subfilters button.active { border-bottom-color:var(--olive-dark); color:var(--olive-dark); }
 .product-grid--catalogue { row-gap:2.5rem; }
 .empty-state { padding:5rem 2rem; text-align:center; color:var(--muted); }
 .empty-state>svg { width:45px; height:45px; color:var(--olive); }
