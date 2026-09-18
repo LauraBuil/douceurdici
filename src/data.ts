@@ -5,6 +5,7 @@ export type CatalogCategory = { id: string; name: string; slug: string; parent_i
 export type CatalogColor = { id: string; name: string; hex_code: string; active: boolean; sort_order: number }
 export type CatalogFragrance = { id: string; name: string; slug: string; composition: string; active: boolean; sort_order: number }
 export type ProductImage = { id: string; product_id?: string; color_id: string | null; image_url: string; alt_text: string; is_primary: boolean; sort_order: number }
+export type ProductCategoryLink = { category_id: string; category: CatalogCategory | null }
 export type ProductColorLink = { color_id: string; color: CatalogColor | null }
 export type ProductFragranceLink = { fragrance_id: string; fragrance: CatalogFragrance | null }
 export type StaffAccount = { user_id: string; email: string | null; role: StaffRole; active: boolean; created_at: string }
@@ -16,6 +17,7 @@ export type Product = {
   category: Category
   category_id: string | null
   category_record?: CatalogCategory | null
+  product_categories?: ProductCategoryLink[]
   short_description: string
   description: string
   price: number
@@ -54,6 +56,14 @@ export type GalleryImage = { id: string; image_url: string; alt_text: string; ca
 export type Market = { id: string; name: string; location: string; start_date: string; end_date: string | null; details: string; published: boolean }
 
 export const legacyCategoryLabels: Record<string, string> = { bougie: 'Bougies', savon: 'Savons', diffuseur: 'Diffuseurs', coffret: 'Coffrets' }
-export const productCategoryLabel = (product: Product) => product.category_record?.name ?? legacyCategoryLabels[product.category] ?? product.category
+export const productCategoryRecords = (product: Product) => {
+  const linked = (product.product_categories ?? []).map((link) => link.category).filter(Boolean) as CatalogCategory[]
+  if (linked.length) return [...new Map(linked.map((category) => [category.id, category])).values()]
+  return product.category_record ? [product.category_record] : []
+}
+export const productCategoryLabel = (product: Product) => {
+  const linked = productCategoryRecords(product)
+  return linked.length ? linked.map((category) => category.name).join(' · ') : legacyCategoryLabels[product.category] ?? product.category
+}
 export const productPrimaryImage = (product: Product) => [...(product.product_images ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order)[0]?.image_url || product.image_url || '/assets/creations-douceur-dici.jpg'
 export const formatPrice = (price: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price)
