@@ -401,6 +401,16 @@ button.danger { color:#964a3f; }
 .catalog-choice,.product-images-editor,.product-category-choice { margin:0; padding:1rem; border:1px solid #d8cfbf; background:#f7f3ec; }
 .catalog-choice legend,.product-images-editor legend,.product-category-choice legend { padding:0 .45rem; color:var(--olive-dark); font-size:.8rem; font-weight:700; }
 .catalog-choice>p,.product-images-editor>p,.product-category-choice>p { margin:0 0 .8rem; color:var(--muted); font-size:.77rem; line-height:1.5; }
+.product-category-groups { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem; }
+.product-category-groups>section { overflow:hidden; border:1px solid #d9d0c1; background:white; }
+.product-category-root { padding:.72rem; flex-direction:row!important; align-items:center; gap:.6rem; background:#f0ece3; cursor:pointer; }
+.product-category-root.selected { background:#e7e8da; }
+.product-category-root input,.product-subcategory-choices input { width:auto; accent-color:var(--olive-dark); }
+.product-category-root>span { display:grid; gap:.12rem; }
+.product-category-root small { color:var(--muted); font-size:.66rem; font-weight:400; }
+.product-subcategory-choices { padding:.45rem; display:grid; gap:.3rem; border-top:1px solid #e3dccf; }
+.product-subcategory-choices label { padding:.5rem .55rem; flex-direction:row; align-items:center; gap:.5rem; border-left:2px solid #d8cfbf; background:#fbfaf7; cursor:pointer; }
+.product-subcategory-choices label.selected { border-left-color:var(--olive); background:#eeeee5; }
 .choice-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.45rem; }
 .choice-grid label { border:1px solid #ddd4c5; padding:.65rem; flex-direction:row; align-items:center; background:white; cursor:pointer; }
 .choice-grid label.selected,.fragrance-choice-grid label.selected { border-color:var(--olive); background:#eeeee5; }
@@ -540,6 +550,7 @@ button.danger { color:#964a3f; }
   .variant-row { grid-template-columns:1fr; }
   .variant-row>button { justify-self:end; }
   .choice-grid { grid-template-columns:1fr 1fr; }
+  .product-category-groups { grid-template-columns:1fr; }
   .product-image-list article { grid-template-columns:58px 1fr 34px; }
   .product-image-list article>img { width:58px; height:58px; }
   .product-image-list article>div:not(.pending-image-name) { grid-template-columns:1fr; }

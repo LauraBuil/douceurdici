@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowRight, AtSign, CalendarDays, Check, ChevronDown, ChevronLeft, Flame, Heart, Image as ImageIcon, LayoutDashboard, Leaf, LoaderCircle, LogOut, Menu, PackagePlus, Pencil, Recycle, Settings, ShoppingBag, Sparkles, Trash2, Upload, X } from 'lucide-react'
+import { ArrowRight, AtSign, CalendarDays, Check, ChevronLeft, Flame, Heart, Image as ImageIcon, LayoutDashboard, Leaf, LoaderCircle, LogOut, Menu, PackagePlus, Pencil, Recycle, Settings, ShoppingBag, Sparkles, Trash2, Upload, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { demoProducts, formatPrice, productCategoryLabel, productPrimaryImage, type CatalogCategory, type CatalogColor, type CatalogFragrance, type GalleryImage, type Market, type Product, type ProductImage, type StaffRole } from './data'
+import { demoProducts, formatPrice, productCategoryLabel, productCategoryRecords, productPrimaryImage, type CatalogCategory, type CatalogColor, type CatalogFragrance, type GalleryImage, type Market, type Product, type ProductImage, type StaffRole } from './data'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { AdminGallery, AdminMarkets, AdminOverview, type AdminView } from './AdminExtras'
 import { AdminSettings } from './AdminSettings'
 
-const PRODUCT_SELECT = '*, category_record:catalog_categories(*), product_colors(color_id,color:catalog_colors(*)), product_fragrances(fragrance_id,fragrance:catalog_fragrances(*)), product_images(*)'
+const PRODUCT_SELECT = '*, category_record:catalog_categories(*), product_categories(category_id,category:catalog_categories(*)), product_colors(color_id,color:catalog_colors(*)), product_fragrances(fragrance_id,fragrance:catalog_fragrances(*)), product_images(*)'
 const emptyProduct: Omit<Product, 'id'> = { name: '', slug: '', category: '', category_id: null, short_description: '', description: '', price: 0, price_visible: true, color: '', scent: '', composition: '', weight: '', image_url: '', featured: false, published: true, sort_order: 0 }
 
 const currentPathWithSearch = () => `${window.location.pathname}${window.location.search}`
@@ -192,16 +192,17 @@ function Catalogue() {
     if (!supabase) return
     supabase.from('catalog_categories').select('*').eq('active', true).order('sort_order').then(({ data }) => setCatalogCategories((data ?? []) as CatalogCategory[]))
   }, [])
-  const productCategories = products.map((product) => product.category_record).filter(Boolean) as CatalogCategory[]
+  const productCategories = products.flatMap(productCategoryRecords)
   const categories = catalogCategories.length ? catalogCategories : [...new Map(productCategories.map((category) => [category.id, category])).values()]
   const roots = categories.filter((category) => !category.parent_id)
   const selectedCategory = categories.find((category) => category.slug === filter)
   const selectedRoot = selectedCategory?.parent_id ? roots.find((category) => category.id === selectedCategory.parent_id) : selectedCategory
   const children = selectedRoot ? categories.filter((category) => category.parent_id === selectedRoot.id) : []
   const filtered = filter === 'tous' ? products : products.filter((product) => {
-    if (!selectedCategory) return product.category === filter || product.category_record?.slug === filter
-    if (selectedCategory.parent_id) return product.category_id === selectedCategory.id || product.category_record?.slug === selectedCategory.slug
-    return product.category === selectedCategory.slug || product.category_id === selectedCategory.id || product.category_record?.parent_id === selectedCategory.id
+    const linkedCategories = productCategoryRecords(product)
+    if (!selectedCategory) return product.category === filter || linkedCategories.some((category) => category.slug === filter)
+    if (selectedCategory.parent_id) return linkedCategories.some((category) => category.id === selectedCategory.id)
+    return product.category === selectedCategory.slug || linkedCategories.some((category) => category.id === selectedCategory.id || category.parent_id === selectedCategory.id)
   })
   const chooseFilter = (slug: string) => navigate(slug === 'tous' ? '/catalogue' : `/catalogue?categorie=${encodeURIComponent(slug)}`)
   return <><Header /><main className="catalogue-page"><section className="catalogue-hero"><span className="eyebrow">La boutique</span><h1>Mes créations artisanales</h1><p>Des bougies, savons, coffrets, fondants et diffuseurs préparés en petites séries dans les Pyrénées.</p></section><section className="catalogue-content section-shell"><div className="filters" role="group" aria-label="Filtrer le catalogue"><button className={filter === 'tous' ? 'active' : ''} onClick={() => chooseFilter('tous')}>Tout</button>{roots.map((category) => <button key={category.id} className={selectedRoot?.id === category.id ? 'active' : ''} onClick={() => chooseFilter(category.slug)}>{category.name}</button>)}</div>{children.length > 0 && <div className="subfilters" role="group" aria-label={`Sous-catégories de ${selectedRoot?.name}`}><button className={filter === selectedRoot?.slug ? 'active' : ''} onClick={() => chooseFilter(selectedRoot!.slug)}>Toute la collection</button>{children.map((category) => <button key={category.id} className={filter === category.slug ? 'active' : ''} onClick={() => chooseFilter(category.slug)}>{category.name}</button>)}</div>}{filtered.length ? <div className="product-grid product-grid--catalogue">{filtered.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><Leaf /><h2>Cette collection arrive bientôt.</h2><p>De nouvelles créations sont en préparation à l’atelier.</p></div>}</section></main><Footer /></>
@@ -342,7 +343,7 @@ function AdminDashboard({ email, role }: { email: string; role: StaffRole }) {
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: true, untrustedContentHint: true },
       async execute() {
-        const { data, error } = await supabase!.from('products').select('id,name,category,category_id,price,price_visible,published,featured,product_colors(color_id),product_fragrances(fragrance_id),product_images(image_url)').order('sort_order')
+        const { data, error } = await supabase!.from('products').select('id,name,category,category_id,price,price_visible,published,featured,product_categories(category_id),product_colors(color_id),product_fragrances(fragrance_id),product_images(image_url,color_id)').order('sort_order')
         if (error) throw new Error('Le catalogue est indisponible.')
         return { products: data }
       },
@@ -355,30 +356,33 @@ function AdminDashboard({ email, role }: { email: string; role: StaffRole }) {
         type: 'object',
         properties: {
           name: { type: 'string', minLength: 2, maxLength: 120 },
-          category_id: { type: 'string', minLength: 36, maxLength: 36 },
+          category_ids: { type: 'array', minItems: 1, items: { type: 'string', minLength: 36, maxLength: 36 }, uniqueItems: true },
           short_description: { type: 'string' }, description: { type: 'string' },
           price: { type: 'number', minimum: 0 }, weight: { type: 'string' },
           price_visible: { type: 'boolean' }, image_url: { type: 'string' }, published: { type: 'boolean' }, featured: { type: 'boolean' },
           color_ids: { type: 'array', items: { type: 'string' }, uniqueItems: true },
           fragrance_ids: { type: 'array', items: { type: 'string' }, uniqueItems: true },
         },
-        required: ['name', 'category_id', 'short_description', 'description', 'price'],
+        required: ['name', 'category_ids', 'short_description', 'description', 'price'],
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false, untrustedContentHint: true },
       async execute(input) {
         if (!input || typeof input !== 'object') throw new Error('Les informations de la création sont invalides.')
         const value = input as Record<string, unknown>
-        if (typeof value.name !== 'string' || value.name.trim().length < 2 || typeof value.category_id !== 'string' || typeof value.price !== 'number' || value.price < 0 || typeof value.short_description !== 'string' || typeof value.description !== 'string') throw new Error('Les champs obligatoires sont invalides.')
+        const categoryIds = Array.isArray(value.category_ids) ? value.category_ids.filter((id): id is string => typeof id === 'string') : []
+        if (typeof value.name !== 'string' || value.name.trim().length < 2 || !categoryIds.length || typeof value.price !== 'number' || value.price < 0 || typeof value.short_description !== 'string' || typeof value.description !== 'string') throw new Error('Les champs obligatoires sont invalides.')
         const slug = value.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-        const { data: category } = await supabase!.from('catalog_categories').select('id,slug,parent_id').eq('id', value.category_id).single()
-        if (!category) throw new Error('La catégorie sélectionnée est invalide.')
+        const { data: availableCategories } = await supabase!.from('catalog_categories').select('id,slug,parent_id').in('id', categoryIds)
+        if (!availableCategories || availableCategories.length !== categoryIds.length) throw new Error('Une catégorie sélectionnée est invalide.')
+        const category = availableCategories.find((item) => item.id === categoryIds[0])!
         const { data: parent } = category.parent_id ? await supabase!.from('catalog_categories').select('slug').eq('id', category.parent_id).single() : { data: null }
         const { data, error } = await supabase!.from('products').insert({ name: value.name.trim(), slug, category: parent?.slug ?? category.slug, category_id: category.id, short_description: value.short_description, description: value.description, price: value.price, price_visible: value.price_visible !== false, weight: typeof value.weight === 'string' ? value.weight : null, image_url: typeof value.image_url === 'string' ? value.image_url : '', published: value.published !== false, featured: value.featured === true }).select('id,name,slug').single()
         if (error) throw new Error('La création n’a pas pu être ajoutée.')
         const colors = Array.isArray(value.color_ids) ? value.color_ids.filter((id): id is string => typeof id === 'string') : []
         const fragrances = Array.isArray(value.fragrance_ids) ? value.fragrance_ids.filter((id): id is string => typeof id === 'string') : []
         const results = await Promise.all([
+          supabase!.from('product_categories').insert(categoryIds.map((category_id) => ({ product_id: data.id, category_id }))),
           colors.length ? supabase!.from('product_colors').insert(colors.map((color_id) => ({ product_id: data.id, color_id }))) : Promise.resolve({ error: null }),
           fragrances.length ? supabase!.from('product_fragrances').insert(fragrances.map((fragrance_id) => ({ product_id: data.id, fragrance_id }))) : Promise.resolve({ error: null }),
         ])
@@ -422,7 +426,11 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null,
   const [categories, setCategories] = useState<CatalogCategory[]>([])
   const [colors, setColors] = useState<CatalogColor[]>([])
   const [fragrances, setFragrances] = useState<CatalogFragrance[]>([])
-  const [selectedColors, setSelectedColors] = useState<string[]>((product?.product_colors ?? []).map((link) => link.color_id))
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
+    const linked = (product?.product_categories ?? []).map((link) => link.category_id)
+    return linked.length ? linked : product?.category_id ? [product.category_id] : []
+  })
+  const [selectedColors, setSelectedColors] = useState<string[]>(() => [...new Set([...(product?.product_colors ?? []).map((link) => link.color_id), ...(product?.product_images ?? []).map((image) => image.color_id).filter((id): id is string => Boolean(id))])])
   const [selectedFragrances, setSelectedFragrances] = useState<string[]>((product?.product_fragrances ?? []).map((link) => link.fragrance_id))
   const [images, setImages] = useState<ProductImage[]>([...(product?.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order))
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([])
@@ -445,17 +453,26 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null,
       const defaultCategory = availableCategories.find((category) => !category.parent_id && category.active) ?? availableCategories.find((category) => category.active)
       if (defaultCategory) {
         setForm((current) => current.category_id ? current : { ...current, category_id: defaultCategory.id })
+        setSelectedCategories((current) => current.length ? current : [defaultCategory.id])
       }
     })
   }, [])
 
   const toggleChoice = (value: string, selected: string[], setter: (values: string[]) => void) => setter(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value])
+  const toggleCategory = (categoryId: string) => {
+    const next = selectedCategories.includes(categoryId) ? selectedCategories.filter((id) => id !== categoryId) : [...selectedCategories, categoryId]
+    setSelectedCategories(next)
+    if (!next.includes(form.category_id ?? '')) update('category_id', next[0] ?? null)
+  }
+  const linkPhotoColor = (colorId: string) => {
+    if (colorId) setSelectedColors((current) => current.includes(colorId) ? current : [...current, colorId])
+  }
   const removeExistingImage = (image: ProductImage) => { setImages((current) => current.filter((item) => item.id !== image.id)); setRemovedImageIds((current) => [...current, image.id]); if (primaryImageKey === `existing:${image.id}`) setPrimaryImageKey('') }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setSaving(true); setError('')
-    const category = categories.find((item) => item.id === form.category_id)
-    if (!category) { setError('Sélectionnez une catégorie.'); setSaving(false); return }
+    const category = categories.find((item) => item.id === (selectedCategories.includes(form.category_id ?? '') ? form.category_id : selectedCategories[0]))
+    if (!category || !selectedCategories.length) { setError('Sélectionnez au moins une catégorie.'); setSaving(false); return }
     const rootCategory = category.parent_id ? categories.find((item) => item.id === category.parent_id) : category
     const payload = {
       name: form.name,
@@ -479,12 +496,15 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null,
     const { data: savedProduct, error: saveError } = await query
     if (saveError || !savedProduct) { setError(saveError?.code === '23505' ? 'Un produit utilise déjà ce nom.' : 'Le produit n’a pas pu être enregistré.'); setSaving(false); return }
 
-    await Promise.all([supabase!.from('product_colors').delete().eq('product_id', savedProduct.id), supabase!.from('product_fragrances').delete().eq('product_id', savedProduct.id)])
+    await Promise.all([supabase!.from('product_categories').delete().eq('product_id', savedProduct.id), supabase!.from('product_colors').delete().eq('product_id', savedProduct.id), supabase!.from('product_fragrances').delete().eq('product_id', savedProduct.id)])
+    const photoColorIds = [...images.map((image) => image.color_id), ...pendingImages.map((image) => image.color_id)].filter((id): id is string => Boolean(id))
+    const savedColorIds = [...new Set([...selectedColors, ...photoColorIds])]
     const optionResults = await Promise.all([
-      selectedColors.length ? supabase!.from('product_colors').insert(selectedColors.map((color_id) => ({ product_id: savedProduct.id, color_id }))) : Promise.resolve({ error: null }),
+      supabase!.from('product_categories').insert(selectedCategories.map((category_id) => ({ product_id: savedProduct.id, category_id }))),
+      savedColorIds.length ? supabase!.from('product_colors').insert(savedColorIds.map((color_id) => ({ product_id: savedProduct.id, color_id }))) : Promise.resolve({ error: null }),
       selectedFragrances.length ? supabase!.from('product_fragrances').insert(selectedFragrances.map((fragrance_id) => ({ product_id: savedProduct.id, fragrance_id }))) : Promise.resolve({ error: null }),
     ])
-    if (optionResults.some((result) => result.error)) { setError('Le produit est enregistré, mais ses options n’ont pas pu être mises à jour.'); setSaving(false); return }
+    if (optionResults.some((result) => result.error)) { setError('Le produit est enregistré, mais ses catégories ou ses options n’ont pas pu être mises à jour.'); setSaving(false); return }
 
     if (removedImageIds.length) await supabase!.from('product_images').delete().in('id', removedImageIds)
     if (images.length) {
@@ -514,20 +534,16 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null,
     onSaved(); setSaving(false)
   }
 
-  const activeCategories = categories.filter((item) => item.active || item.id === form.category_id)
+  const activeCategories = categories.filter((item) => item.active || selectedCategories.includes(item.id))
   const roots = categories.filter((item) => !item.parent_id)
-  const selectedCategory = categories.find((item) => item.id === form.category_id)
-  const selectedRootId = selectedCategory?.parent_id ?? selectedCategory?.id ?? ''
-  const availableRoots = roots.filter((item) => item.active || item.id === selectedRootId)
-  const availableSubcategories = activeCategories.filter((item) => item.parent_id === selectedRootId)
   return <motion.div className="editor-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><motion.section className="editor-panel" initial={{ x: 60 }} animate={{ x: 0 }} exit={{ x: 60 }} aria-modal="true" role="dialog" aria-labelledby="editor-title"><header><div><span className="eyebrow">Catalogue</span><h2 id="editor-title">{product ? 'Modifier le produit' : 'Nouveau produit'}</h2></div><button onClick={onClose} aria-label="Fermer"><X /></button></header><form onSubmit={submit}>
     <label>Nom du produit<input value={form.name} onChange={(event) => { update('name', event.target.value); if (!product) update('slug', slugify(event.target.value)) }} required /></label>
-    <fieldset className="product-category-choice"><legend>Classement du produit</legend><p>Choisissez d’abord la famille, puis une sous-catégorie si elle correspond au produit.</p><div className="form-grid"><label>Catégorie principale<select value={selectedRootId} onChange={(event) => update('category_id', event.target.value)} required><option value="" disabled>Choisir une catégorie</option>{availableRoots.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><ChevronDown /></label><label>Sous-catégorie<select value={selectedCategory?.parent_id ? selectedCategory.id : ''} onChange={(event) => update('category_id', event.target.value || selectedRootId)} disabled={!selectedRootId || availableSubcategories.length === 0}><option value="">Aucune — collection générale</option>{availableSubcategories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><ChevronDown /></label></div></fieldset>
+    <fieldset className="product-category-choice"><legend>Catégories du produit</legend><p>Cochez toutes les collections dans lesquelles ce produit doit apparaître.</p><div className="product-category-groups">{roots.filter((root) => root.active || selectedCategories.includes(root.id) || activeCategories.some((item) => item.parent_id === root.id)).map((root) => { const children = activeCategories.filter((item) => item.parent_id === root.id); return <section key={root.id}><label className={`product-category-root ${selectedCategories.includes(root.id) ? 'selected' : ''}`}><input type="checkbox" checked={selectedCategories.includes(root.id)} onChange={() => toggleCategory(root.id)} /><span><strong>{root.name}</strong><small>Collection principale</small></span></label>{children.length > 0 && <div className="product-subcategory-choices">{children.map((child) => <label key={child.id} className={selectedCategories.includes(child.id) ? 'selected' : ''}><input type="checkbox" checked={selectedCategories.includes(child.id)} onChange={() => toggleCategory(child.id)} />{child.name}</label>)}</div>}</section> })}</div></fieldset>
     <label>Prix en €<input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update('price', Number(event.target.value))} required /></label>
     <fieldset className="catalog-choice"><legend>Couleurs disponibles</legend><p>Les couleurs sont indépendantes des parfums.</p><div className="choice-grid">{colors.filter((item) => item.active || selectedColors.includes(item.id)).map((color) => <label key={color.id} className={selectedColors.includes(color.id) ? 'selected' : ''}><input type="checkbox" checked={selectedColors.includes(color.id)} onChange={() => toggleChoice(color.id, selectedColors, setSelectedColors)} /><span className="color-chip" style={{ backgroundColor: color.hex_code }} />{color.name}</label>)}</div>{!colors.length && <small>Ajoutez d’abord des couleurs dans Paramètres.</small>}</fieldset>
     <fieldset className="catalog-choice"><legend>Parfums proposés</legend><p>La composition affichée vient automatiquement du parfum sélectionné.</p><div className="fragrance-choice-grid">{fragrances.filter((item) => item.active || selectedFragrances.includes(item.id)).map((fragrance) => <label key={fragrance.id} className={selectedFragrances.includes(fragrance.id) ? 'selected' : ''}><input type="checkbox" checked={selectedFragrances.includes(fragrance.id)} onChange={() => toggleChoice(fragrance.id, selectedFragrances, setSelectedFragrances)} /><span><strong>{fragrance.name}</strong><small>{fragrance.composition}</small></span></label>)}</div>{!fragrances.length && <small>Ajoutez d’abord des parfums dans Paramètres.</small>}</fieldset>
     <label>Description courte<input value={form.short_description} onChange={(event) => update('short_description', event.target.value)} placeholder="Une phrase visible dans le catalogue" required /></label><label>Description détaillée<textarea value={form.description} onChange={(event) => update('description', event.target.value)} rows={4} required /></label><div className="form-grid"><label>Poids / format<input value={form.weight ?? ''} onChange={(event) => update('weight', event.target.value)} placeholder="180 g" /></label><label>Ordre d’affichage<input type="number" value={form.sort_order} onChange={(event) => update('sort_order', Number(event.target.value))} /></label></div>
-    <fieldset className="product-images-editor"><legend>Galerie du produit</legend><p>Ajoutez plusieurs photos et associez chacune à une couleur si vous le souhaitez.</p><label className="multi-upload"><Upload />Ajouter des photos<input type="file" multiple accept="image/png,image/jpeg,image/webp" onChange={(event) => { const additions = Array.from(event.target.files ?? []).map((file) => ({ localId: crypto.randomUUID(), file, color_id: '' })); setPendingImages((current) => [...current, ...additions]); event.currentTarget.value = '' }} /></label><div className="product-image-list">{images.map((image) => <article key={image.id}><img src={image.image_url} alt={image.alt_text} /><div><select value={image.color_id ?? ''} onChange={(event) => setImages((current) => current.map((item) => item.id === image.id ? { ...item, color_id: event.target.value || null } : item))}><option value="">Toutes les couleurs</option>{colors.map((color) => <option key={color.id} value={color.id}>{color.name}</option>)}</select><label><input type="radio" name="primary-image" checked={primaryImageKey === `existing:${image.id}` || (!primaryImageKey && image === images[0])} onChange={() => setPrimaryImageKey(`existing:${image.id}`)} /> Photo principale</label></div><button type="button" onClick={() => removeExistingImage(image)} aria-label="Retirer cette photo"><Trash2 /></button></article>)}{pendingImages.map((pending) => <article key={pending.localId}><div className="pending-image-name"><ImageIcon />{pending.file.name}</div><div><select value={pending.color_id} onChange={(event) => setPendingImages((current) => current.map((item) => item.localId === pending.localId ? { ...item, color_id: event.target.value } : item))}><option value="">Toutes les couleurs</option>{colors.map((color) => <option key={color.id} value={color.id}>{color.name}</option>)}</select><label><input type="radio" name="primary-image" checked={primaryImageKey === `pending:${pending.localId}` || (!primaryImageKey && !images.length && pending === pendingImages[0])} onChange={() => setPrimaryImageKey(`pending:${pending.localId}`)} /> Photo principale</label></div><button type="button" onClick={() => { setPendingImages((current) => current.filter((item) => item.localId !== pending.localId)); if (primaryImageKey === `pending:${pending.localId}`) setPrimaryImageKey('') }} aria-label="Retirer cette photo"><Trash2 /></button></article>)}</div></fieldset>
+    <fieldset className="product-images-editor"><legend>Galerie du produit</legend><p>Ajoutez plusieurs photos, puis indiquez la couleur représentée sur chacune d’elles.</p><label className="multi-upload"><Upload />Ajouter des photos<input type="file" multiple accept="image/png,image/jpeg,image/webp" onChange={(event) => { const additions = Array.from(event.target.files ?? []).map((file) => ({ localId: crypto.randomUUID(), file, color_id: '' })); setPendingImages((current) => [...current, ...additions]); event.currentTarget.value = '' }} /></label><div className="product-image-list">{images.map((image) => <article key={image.id}><img src={image.image_url} alt={image.alt_text} /><div><select aria-label={`Couleur de la photo ${image.alt_text || form.name}`} value={image.color_id ?? ''} onChange={(event) => { const colorId = event.target.value; linkPhotoColor(colorId); setImages((current) => current.map((item) => item.id === image.id ? { ...item, color_id: colorId || null } : item)) }}><option value="">Photo commune à toutes les couleurs</option>{colors.map((color) => <option key={color.id} value={color.id}>Couleur : {color.name}</option>)}</select><label><input type="radio" name="primary-image" checked={primaryImageKey === `existing:${image.id}` || (!primaryImageKey && image === images[0])} onChange={() => setPrimaryImageKey(`existing:${image.id}`)} /> Photo principale</label></div><button type="button" onClick={() => removeExistingImage(image)} aria-label="Retirer cette photo"><Trash2 /></button></article>)}{pendingImages.map((pending) => <article key={pending.localId}><div className="pending-image-name"><ImageIcon />{pending.file.name}</div><div><select aria-label={`Couleur de la photo ${pending.file.name}`} value={pending.color_id} onChange={(event) => { const colorId = event.target.value; linkPhotoColor(colorId); setPendingImages((current) => current.map((item) => item.localId === pending.localId ? { ...item, color_id: colorId } : item)) }}><option value="">Photo commune à toutes les couleurs</option>{colors.map((color) => <option key={color.id} value={color.id}>Couleur : {color.name}</option>)}</select><label><input type="radio" name="primary-image" checked={primaryImageKey === `pending:${pending.localId}` || (!primaryImageKey && !images.length && pending === pendingImages[0])} onChange={() => setPrimaryImageKey(`pending:${pending.localId}`)} /> Photo principale</label></div><button type="button" onClick={() => { setPendingImages((current) => current.filter((item) => item.localId !== pending.localId)); if (primaryImageKey === `pending:${pending.localId}`) setPrimaryImageKey('') }} aria-label="Retirer cette photo"><Trash2 /></button></article>)}</div></fieldset>
     <div className="switches"><label><input type="checkbox" checked={form.price_visible} onChange={(event) => update('price_visible', event.target.checked)} /><span />Afficher le prix sur le site</label><label><input type="checkbox" checked={form.published} onChange={(event) => update('published', event.target.checked)} /><span />Visible dans la boutique</label><label><input type="checkbox" checked={form.featured} onChange={(event) => update('featured', event.target.checked)} /><span />Afficher parmi les créations phares</label></div>{error && <div className="form-error">{error}</div>}
     <footer>
       <button type="button" className="button button--light" onClick={onClose}>Annuler</button>
