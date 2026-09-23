@@ -54,6 +54,9 @@ export function Header() {
             <AppLink href="/marches" onNavigate={() => setOpen(false)}>
               Marchés
             </AppLink>
+            <AppLink href="/mes-commandes" onNavigate={() => setOpen(false)}>
+              Mes commandes
+            </AppLink>
             {/*<a href="/#histoire" onClick={() => setOpen(false)}>Notre histoire</a>*/}
           </nav>
           <CartButton />

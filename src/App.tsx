@@ -9,6 +9,7 @@ import { LegalNoticePage } from "./pages/LegalNoticePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { CartPage } from "./pages/CartPage";
 import { OrderConfirmationPage } from "./pages/OrderConfirmationPage";
+import { OrderHistoryPage } from "./pages/OrderHistoryPage";
 
 export default function App() {
   const path = usePath();
@@ -16,6 +17,7 @@ export default function App() {
   if (pathname.startsWith("/admin")) return <Admin />;
   if (pathname === "/panier") return <CartPage />;
   if (pathname === "/commande-confirmee") return <OrderConfirmationPage />;
+  if (pathname === "/mes-commandes") return <OrderHistoryPage />;
   if (pathname.startsWith("/produit/"))
     return (
       <ProductDetailPage
