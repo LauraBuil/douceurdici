@@ -225,7 +225,7 @@ export function Home() {
                 Sur Instagram <em>un peu d’inspiration</em>
               </h2>
               <a
-                href="https://www.instagram.com/"
+                href="https://www.instagram.com/douceur_d_ici_65"
                 target="_blank"
                 rel="noreferrer"
               >

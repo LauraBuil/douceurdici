@@ -24,7 +24,7 @@ export function Footer() {
 
         <div>
           <h3>Nous retrouver</h3>
-          <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">
+          <a href="https://www.instagram.com/douceur_d_ici_65" target="_blank" rel="noreferrer">
             <AtSign size={17} /> Instagram
           </a>
           <a href="mailto:douceurdici@protonmail.com">
