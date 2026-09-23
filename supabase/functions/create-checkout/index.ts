@@ -7,7 +7,7 @@ const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("
 const allowedHosts = new Set(["douceurdici.com", "www.douceurdici.com", "dev.douceurdici.com", "localhost", "127.0.0.1"])
 
 function response(body: Record<string, unknown>, status: number, origin: string) {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "authorization, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" } })
+  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" } })
 }
 
 Deno.serve(async (request) => {
