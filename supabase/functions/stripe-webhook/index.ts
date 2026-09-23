@@ -8,7 +8,7 @@ const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("
 async function notifyAdmin(orderId: string) {
   const apiKey = Deno.env.get("RESEND_API_KEY")
   const recipient = Deno.env.get("ADMIN_NOTIFICATION_EMAIL")
-  const sender = Deno.env.get("ORDER_EMAIL_FROM")
+  const sender = Deno.env.get("RESEND_FROM_EMAIL")
   if (!apiKey || !recipient || !sender) return
   const { data: order } = await supabase.from("orders").select("id,subtotal,customer_email,customer_name,order_items(product_name,quantity,is_preorder)").eq("id", orderId).maybeSingle()
   if (!order) return
