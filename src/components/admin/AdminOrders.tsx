@@ -18,6 +18,16 @@ type Order = {
   id: string;
   status: string;
   subtotal: number;
+  shipping_amount: number;
+  total: number;
+  shipping_address: {
+    fullName?: string;
+    line1?: string;
+    line2?: string;
+    postalCode?: string;
+    city?: string;
+    country?: string;
+  } | null;
   customer_email: string | null;
   customer_name: string | null;
   paid_at: string | null;
@@ -50,7 +60,7 @@ export function AdminOrders() {
       supabase!
         .from("orders")
         .select(
-          "id,status,subtotal,customer_email,customer_name,paid_at,created_at",
+          "id,status,subtotal,shipping_amount,total,shipping_address,customer_email,customer_name,paid_at,created_at",
         )
         .not("status", "in", "(cancelled,expired)")
         .order("created_at", { ascending: false }),
@@ -227,9 +237,28 @@ export function AdminOrders() {
                   </li>
                 ))}
               </ul>
+              {order.shipping_address && (
+                <p className="admin-order-address">
+                  Livraison : {order.shipping_address.line1}
+                  {order.shipping_address.line2
+                    ? `, ${order.shipping_address.line2}`
+                    : ""}
+                  , {order.shipping_address.postalCode} {order.shipping_address.city}
+                </p>
+              )}
               <footer>
-                <span>Total</span>
-                <strong>{formatPrice(Number(order.subtotal))}</strong>
+                <div>
+                  <span>Sous-total</span>
+                  <strong>{formatPrice(Number(order.subtotal))}</strong>
+                </div>
+                <div>
+                  <span>Livraison</span>
+                  <strong>{formatPrice(Number(order.shipping_amount))}</strong>
+                </div>
+                <div>
+                  <span>Total</span>
+                  <strong>{formatPrice(Number(order.total))}</strong>
+                </div>
               </footer>
             </article>
           ))}

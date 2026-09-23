@@ -2517,6 +2517,55 @@ img {
   color: var(--muted);
   font-size: 0.8rem;
 }
+.admin-shop-setting--shipping {
+  grid-template-columns: 1fr auto auto;
+}
+.admin-shipping-rate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.admin-shipping-rate input {
+  width: 130px;
+  border: 1px solid #c8bea9;
+  padding: 0.7rem 0.8rem;
+  background: #fffefa;
+}
+.admin-order-address {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.confirmation-page {
+  min-height: 62vh;
+  padding: 7rem 1rem;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+.confirmation-page > svg {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 1.5rem;
+  color: var(--olive);
+  stroke-width: 1.2;
+}
+.confirmation-page h1 {
+  margin: 0.8rem 0 1rem;
+  font-family: Didot, "Abhaya Libre", serif;
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-weight: 400;
+}
+.confirmation-page p {
+  max-width: 540px;
+  margin: 0 0 2rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
 .admin-switch {
   display: flex;
   align-items: center;
@@ -3895,6 +3944,9 @@ button.danger {
   }
   .admin-shop-setting {
     grid-template-columns: 36px 1fr;
+  }
+  .admin-shop-setting--shipping {
+    grid-template-columns: 1fr;
   }
   .admin-shop-setting .admin-switch {
     grid-column: 1/-1;

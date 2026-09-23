@@ -8,12 +8,14 @@ import { MarketsPage } from "./pages/MarketsPage";
 import { LegalNoticePage } from "./pages/LegalNoticePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { CartPage } from "./pages/CartPage";
+import { OrderConfirmationPage } from "./pages/OrderConfirmationPage";
 
 export default function App() {
   const path = usePath();
   const pathname = path.split("?")[0];
   if (pathname.startsWith("/admin")) return <Admin />;
   if (pathname === "/panier") return <CartPage />;
+  if (pathname === "/commande-confirmee") return <OrderConfirmationPage />;
   if (pathname.startsWith("/produit/"))
     return (
       <ProductDetailPage

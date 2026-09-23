@@ -8,6 +8,15 @@ export type OrderReservation = {
   reservation_expires_at: string;
 };
 
+export type ShippingAddress = {
+  fullName: string;
+  line1: string;
+  line2: string;
+  postalCode: string;
+  city: string;
+  country: string;
+};
+
 export async function createOrderReservation(items: CartItem[]) {
   if (!supabase) {
     throw new Error("La connexion à la boutique est indisponible.");
@@ -34,6 +43,8 @@ export async function createCheckoutSession(
   items: CartItem[],
   customerEmail: string,
   customerName: string,
+  shippingAddress: ShippingAddress,
+  appUrl: string,
 ) {
   if (!supabase) {
     throw new Error("La connexion à la boutique est indisponible.");
@@ -53,6 +64,8 @@ export async function createCheckoutSession(
       })),
       customerEmail,
       customerName,
+      shippingAddress,
+      appUrl,
     },
   });
 

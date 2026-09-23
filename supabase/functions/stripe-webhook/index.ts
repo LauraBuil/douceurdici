@@ -10,9 +10,11 @@ async function notifyAdmin(orderId: string) {
   const recipient = Deno.env.get("ADMIN_NOTIFICATION_EMAIL")
   const sender = Deno.env.get("RESEND_FROM_EMAIL")
   if (!apiKey || !recipient || !sender) return
-  const { data: order } = await supabase.from("orders").select("id,subtotal,customer_email,customer_name,order_items(product_name,quantity,is_preorder)").eq("id", orderId).maybeSingle()
+  const { data: order } = await supabase.from("orders").select("id,subtotal,shipping_amount,total,customer_email,customer_name,shipping_address,order_items(product_name,quantity,is_preorder)").eq("id", orderId).maybeSingle()
   if (!order) return
-  await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, body: JSON.stringify({ from: sender, to: [recipient], subject: `Nouvelle commande payée #${order.id.slice(0, 8)}`, html: `<h2>Nouvelle commande payée</h2><p>Client : ${order.customer_name ?? "Non renseigné"} (${order.customer_email ?? "Non renseigné"})</p><p>Total : ${Number(order.subtotal).toFixed(2)} €</p><p>La commande est visible dans l’administration.</p>` }) })
+  const address = order.shipping_address as { line1?: string; line2?: string; postalCode?: string; city?: string } | null
+  const addressLabel = address ? `${address.line1 ?? ""}${address.line2 ? `, ${address.line2}` : ""}, ${address.postalCode ?? ""} ${address.city ?? ""}` : "Non renseignée"
+  await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, body: JSON.stringify({ from: sender, to: [recipient], subject: `Nouvelle commande payée #${order.id.slice(0, 8)}`, html: `<h2>Nouvelle commande payée</h2><p>Client : ${order.customer_name ?? "Non renseigné"} (${order.customer_email ?? "Non renseigné"})</p><p>Adresse de livraison : ${addressLabel}</p><p>Sous-total : ${Number(order.subtotal).toFixed(2)} €</p><p>Livraison : ${Number(order.shipping_amount ?? 0).toFixed(2)} €</p><p>Total : ${Number(order.total ?? order.subtotal).toFixed(2)} €</p><p>La commande est visible dans l’administration.</p>` }) })
   await supabase.from("orders").update({ notification_sent_at: new Date().toISOString() }).eq("id", orderId)
 }
 
