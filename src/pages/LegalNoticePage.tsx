@@ -1,0 +1,132 @@
+import { useDocumentTitle } from "../lib/formatters";
+import { Header } from "../components/site/Header";
+import { Footer } from "../components/site/Footer";
+export function LegalNoticePage() {
+  useDocumentTitle("Mentions légales");
+  return (
+    <>
+      <Header />
+      <main className="legal-page">
+        <header className="legal-heading">
+          <span className="eyebrow">Informations légales</span>
+          <h1>Mentions légales</h1>
+          <p>
+            Informations relatives à l’édition et au fonctionnement du site
+            douceurdici.com.
+          </p>
+        </header>
+        <div className="legal-layout">
+          <aside>
+            <p>Dernière mise à jour</p>
+            <strong>14 septembre 2026</strong>
+            <a href="mailto:douceurdici@protonmail.com">Nous contacter</a>
+          </aside>
+          <div className="legal-content">
+            <section>
+              <h2>1. Éditeur du site</h2>
+              <p>
+                Le site <strong>douceurdici.com</strong> est édité par Laura
+                Buil, conceptrice et développeuse d'applications web.
+              </p>
+              <div className="legal-todo">
+                <p>
+                  N° Siret 827 536 749 00027, Raison sociale Douceur d'ici,
+                  Entrepreneur individuel (EI).
+                </p>
+              </div>
+              <p>
+                Adresse électronique :{" "}
+                <a href="mailto:douceurdici@protonmail.com">
+                  douceurdici@protonmail.com
+                </a>
+              </p>
+            </section>
+            <section>
+              <h2>2. Direction de la publication</h2>
+              <p>
+                La direction de la publication est assurée par la personne
+                responsable de Douceur d’ici.
+              </p>
+              <div className="legal-todo">
+                <p>Clara Tetart, directrice et propriétaire.</p>
+              </div>
+            </section>
+            <section>
+              <h2>3. Hébergement</h2>
+              <p>
+                Le site est hébergé par{" "}
+                <strong>Hostinger International Limited</strong>, société privée
+                à responsabilité limitée de droit chypriote, 61 Lordou Vironos
+                Street, 6023 Larnaca, Chypre.
+              </p>
+              <p>
+                <a
+                  href="https://www.hostinger.fr/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  www.hostinger.fr
+                </a>
+              </p>
+            </section>
+            <section>
+              <h2>4. Propriété intellectuelle</h2>
+              <p>
+                Les textes, photographies, illustrations, éléments graphiques,
+                logos et créations présentés sur ce site sont protégés par le
+                droit de la propriété intellectuelle. Sauf autorisation écrite
+                préalable, toute reproduction, représentation, adaptation ou
+                exploitation, totale ou partielle, est interdite.
+              </p>
+            </section>
+            <section>
+              <h2>5. Responsabilité</h2>
+              <p>
+                Douceur d’ici veille à fournir des informations aussi exactes et
+                à jour que possible. Ces informations sont données à titre
+                indicatif et peuvent évoluer. Douceur d’ici ne peut garantir
+                l’absence d’erreur ou l’accès continu au site.
+              </p>
+            </section>
+            <section>
+              <h2>6. Données personnelles</h2>
+              <p>
+                Les messages envoyés à l’adresse de contact sont utilisés
+                uniquement pour répondre à la demande reçue. Des données
+                techniques peuvent être traitées par l’hébergeur pour assurer la
+                sécurité et le bon fonctionnement du site.
+              </p>
+              <p>
+                Pour toute question ou pour exercer vos droits d’accès, de
+                rectification, d’effacement, de limitation ou d’opposition,
+                écrivez à{" "}
+                <a href="mailto:douceurdici@protonmail.com">
+                  douceurdici@protonmail.com
+                </a>
+                .
+              </p>
+            </section>
+            <section>
+              <h2>7. Cookies et stockage local</h2>
+              <p>
+                Le site public ne dépose pas de cookies publicitaires ou de
+                mesure d’audience. L’espace d’administration utilise uniquement
+                les mécanismes techniques nécessaires à l’authentification et à
+                la sécurité de la session.
+              </p>
+            </section>
+            <section>
+              <h2>8. Liens externes</h2>
+              <p>
+                Le site peut contenir des liens vers des services tiers. Douceur
+                d’ici n’exerce aucun contrôle sur leur contenu ni sur leurs
+                pratiques de confidentialité.
+              </p>
+            </section>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
+}
