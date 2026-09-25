@@ -41,6 +41,7 @@ export function LegalNoticePage() {
                   douceurdici@protonmail.com
                 </a>
               </p>
+              <p>Adresse professionnelle : 1 rue des Pyrénées, 65200 Trébons.</p>
             </section>
             <section>
               <h2>2. Direction de la publication</h2>
