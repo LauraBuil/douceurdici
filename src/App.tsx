@@ -12,7 +12,6 @@ import { OrderConfirmationPage } from "./pages/OrderConfirmationPage";
 import { OrderHistoryPage } from "./pages/OrderHistoryPage";
 import { TermsPage } from "./pages/TermsPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
-import { ReturnsPage } from "./pages/ReturnsPage";
 
 export default function App() {
   const path = usePath();
@@ -23,7 +22,9 @@ export default function App() {
   if (pathname === "/mes-commandes") return <OrderHistoryPage />;
   if (pathname === "/cgv") return <TermsPage />;
   if (pathname === "/confidentialite") return <PrivacyPage />;
-  if (pathname === "/retours") return <ReturnsPage />;
+  if (pathname === "/retours" || pathname === "/commandes-et-retours") {
+    return <TermsPage />;
+  }
   if (pathname.startsWith("/produit/"))
     return (
       <ProductDetailPage

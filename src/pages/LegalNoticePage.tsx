@@ -26,15 +26,14 @@ export function LegalNoticePage() {
               <h2>1. Éditeur du site</h2>
               <p>
                 Le site <strong>douceurdici.com</strong> est édité par Clara
-                Tetart, micro-entrepreneuse, sous le nom commercial Douceur
-                d’ici.
+                Tetart, entrepreneur individuel (EI), exerçant sous le nom commercial Douceur d’ici.
               </p>
-              <div className="legal-todo">
-                <p>
-                  SIRET : 827 536 749 00027. Activité : fabrication de bougies
-                  artisanales.
-                </p>
-              </div>
+              <p>
+                SIRET : 827 536 749 00027.
+              </p>
+              <p>
+                Activité : fabrication de bougies artisanales.
+              </p>
               <p>
                 Adresse électronique :{" "}
                 <a href="mailto:douceurdici@protonmail.com">
@@ -46,14 +45,17 @@ export function LegalNoticePage() {
             <section>
               <h2>2. Direction de la publication</h2>
               <p>
-                La direction de la publication est assurée par Clara Tetart.
+                La directrice de la publication est Clara Tetart, entrepreneur individuel exploitant Douceur d’ici.
               </p>
-              <div className="legal-todo">
-                <p>Clara Tetart, responsable de Douceur d’ici.</p>
-              </div>
             </section>
             <section>
-              <h2>3. Hébergement</h2>
+              <h2>3. Conception et développement du site</h2>
+              <p>
+                Conception et développement : Laura Buil, développeuse et conceptrice du site.
+              </p>
+            </section>
+            <section>
+              <h2>4. Hébergement</h2>
               <p>
                 Le site est hébergé par{" "}
                 <strong>Hostinger International Limited</strong>, société privée
@@ -71,7 +73,7 @@ export function LegalNoticePage() {
               </p>
             </section>
             <section>
-              <h2>4. Propriété intellectuelle</h2>
+              <h2>5. Propriété intellectuelle</h2>
               <p>
                 Les textes, photographies, illustrations, éléments graphiques,
                 logos et créations présentés sur ce site sont protégés par le
@@ -81,7 +83,7 @@ export function LegalNoticePage() {
               </p>
             </section>
             <section>
-              <h2>5. Responsabilité</h2>
+              <h2>6. Responsabilité</h2>
               <p>
                 Douceur d’ici veille à fournir des informations aussi exactes et
                 à jour que possible. Ces informations sont données à titre
@@ -90,7 +92,7 @@ export function LegalNoticePage() {
               </p>
             </section>
             <section>
-              <h2>6. Données personnelles</h2>
+              <h2>7. Données personnelles</h2>
               <p>
                 Les données collectées lors d’une commande sont utilisées pour
                 préparer, livrer et suivre la commande, envoyer les emails de
@@ -109,7 +111,7 @@ export function LegalNoticePage() {
               </p>
             </section>
             <section>
-              <h2>7. Cookies et stockage local</h2>
+              <h2>8. Cookies et stockage local</h2>
               <p>
                 Le site public ne dépose pas de cookies publicitaires ou de
                 mesure d’audience. L’espace d’administration utilise uniquement
@@ -118,7 +120,7 @@ export function LegalNoticePage() {
               </p>
             </section>
             <section>
-              <h2>8. Liens externes</h2>
+              <h2>9. Liens externes</h2>
               <p>
                 Le site peut contenir des liens vers des services tiers. Douceur
                 d’ici n’exerce aucun contrôle sur leur contenu ni sur leurs
