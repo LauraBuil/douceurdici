@@ -2620,6 +2620,23 @@ img {
   background: transparent;
   color: var(--ink);
 }
+.checkout-terms {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start;
+  gap: 0.6rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 400 !important;
+}
+.checkout-terms input {
+  width: 17px !important;
+  margin-top: 0.1rem;
+  accent-color: var(--olive-dark);
+}
+.checkout-terms a {
+  color: var(--olive-dark);
+  text-decoration: underline;
+}
 .history-list {
   width: min(820px, 100%);
   margin: 3rem auto 0;

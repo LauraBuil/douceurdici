@@ -25,13 +25,14 @@ export function LegalNoticePage() {
             <section>
               <h2>1. Éditeur du site</h2>
               <p>
-                Le site <strong>douceurdici.com</strong> est édité par Laura
-                Buil, conceptrice et développeuse d'applications web.
+                Le site <strong>douceurdici.com</strong> est édité par Clara
+                Tetart, micro-entrepreneuse, sous le nom commercial Douceur
+                d’ici.
               </p>
               <div className="legal-todo">
                 <p>
-                  N° Siret 827 536 749 00027, Raison sociale Douceur d'ici,
-                  Entrepreneur individuel (EI).
+                  SIRET : 827 536 749 00027. Activité : fabrication de bougies
+                  artisanales.
                 </p>
               </div>
               <p>
@@ -44,11 +45,10 @@ export function LegalNoticePage() {
             <section>
               <h2>2. Direction de la publication</h2>
               <p>
-                La direction de la publication est assurée par la personne
-                responsable de Douceur d’ici.
+                La direction de la publication est assurée par Clara Tetart.
               </p>
               <div className="legal-todo">
-                <p>Clara Tetart, directrice et propriétaire.</p>
+                <p>Clara Tetart, responsable de Douceur d’ici.</p>
               </div>
             </section>
             <section>
@@ -91,10 +91,11 @@ export function LegalNoticePage() {
             <section>
               <h2>6. Données personnelles</h2>
               <p>
-                Les messages envoyés à l’adresse de contact sont utilisés
-                uniquement pour répondre à la demande reçue. Des données
-                techniques peuvent être traitées par l’hébergeur pour assurer la
-                sécurité et le bon fonctionnement du site.
+                Les données collectées lors d’une commande sont utilisées pour
+                préparer, livrer et suivre la commande, envoyer les emails de
+                confirmation et répondre aux obligations comptables. Les
+                paiements sont traités par Stripe : Douceur d’ici ne conserve
+                pas les coordonnées bancaires.
               </p>
               <p>
                 Pour toute question ou pour exercer vos droits d’accès, de

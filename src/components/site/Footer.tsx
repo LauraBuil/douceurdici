@@ -41,6 +41,9 @@ export function Footer() {
         <span>Fabriqué avec soin dans les Pyrénées</span>
         <div className="footer-legal-links">
           <AppLink href="/mentions-legales">Mentions légales</AppLink>
+          <AppLink href="/cgv">CGV</AppLink>
+          <AppLink href="/confidentialite">Confidentialité</AppLink>
+          <AppLink href="/retours">Retours</AppLink>
           <AppLink href="/admin">Administration</AppLink>
         </div>
       </div>

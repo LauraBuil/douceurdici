@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { X } from "lucide-react";
+import { AppLink } from "../site/AppLink";
 import type { CartItem } from "./CartTypes";
 import {
   createCheckoutSession,
@@ -24,11 +25,16 @@ export function CheckoutDialog({ items, onClose }: CheckoutDialogProps) {
     country: "France",
   });
   const [error, setError] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    if (!acceptedTerms) {
+      setError("Vous devez accepter les conditions générales de vente.");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -159,6 +165,17 @@ export function CheckoutDialog({ items, onClose }: CheckoutDialogProps) {
               />
             </label>
           </div>
+          <label className="checkout-terms">
+            <input
+              required
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(event) => setAcceptedTerms(event.target.checked)}
+            />
+            <span>
+              J’accepte les <AppLink href="/cgv">conditions générales de vente</AppLink>.
+            </span>
+          </label>
           {error && <p className="form-error">{error}</p>}
           <button className="button button--dark" type="submit" disabled={loading}>
             {loading ? "Préparation du paiement…" : "Continuer vers le paiement"}
